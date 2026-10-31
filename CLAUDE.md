@@ -20,12 +20,14 @@ cd client && npm install && npm run dev   # http://localhost:5173
 - `server/.env` không commit, copy từ `server/.env.example`. Biến môi trường: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `GEMINI_API_KEY`, `BREVO_API_KEY`, `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`, `CLIENT_URL`, `CLOUDINARY_*`.
 - `server/.env` local trỏ vào **branch `dev` của Neon** (bản sao tách khỏi production, muốn lấy lại dữ liệu mới thì *Reset from parent* trên console). Server in host DB lúc khởi động, host production bắt đầu bằng `ep-square-recipe-`. Render dùng `DATABASE_URL` riêng trỏ vào production.
 - Client: `.env.development` (localhost:5000) và `.env.production` (URL Render) đều được commit, chỉ chứa `VITE_API_URL`. Không bao giờ để secret trong biến `VITE_*` vì chúng bị đóng gói vào JS gửi xuống trình duyệt.
-- Không có test tự động. Kiểm tra bằng `npm run lint` (hiện 0 lỗi, giữ nguyên như vậy) và `npm run build` ở client.
+- Client không có test, kiểm tra bằng `npm run lint` (hiện 0 lỗi, giữ nguyên như vậy) và `npm run build`.
+- Server: `npm test` (Jest + Supertest, `--runInBand`) chạy trên **branch `test` của Neon** (chỉ có schema), URL nằm trong `server/.env.test` (không commit). Trước khi chạy, `tests/setup/globalSetup.js` xoá bảng rồi dựng lại từ `db/schema.sql`, và dừng nếu host là production hoặc trùng host DB dev trong `.env`. Mỗi test `TRUNCATE` lại dữ liệu; mailer được mock (đọc token từ `mock.calls`); dữ liệu tạo thẳng vào DB qua `tests/helpers.js`; khách vãng lai mỗi request một IP (`X-Forwarded-For`) để không dính rate limit.
 
 ## Cấu trúc
 
 ### Server
-- `server.js`: khởi tạo app, gắn route, chạy migration nhỏ (`ALTER TABLE ... IF NOT EXISTS`) trước khi `listen`. Không có công cụ migration riêng, schema thay đổi thì thêm câu lệnh idempotent ở đây.
+- `app.js`: tạo app Express, gắn middleware và route, export app (không `listen`, để test dùng được).
+- `server.js`: chạy migration nhỏ (`ALTER TABLE ... IF NOT EXISTS`) rồi `listen`. Không có công cụ migration riêng, schema thay đổi thì thêm câu lệnh idempotent ở đây **và** sửa `db/schema.sql` (schema đầy đủ, dùng dựng DB mới và DB test).
 - `routes/*.routes.js`: mỗi nhóm API một file, mount dưới `/api/...`. Route admin dùng `verifyToken` + `requireAdmin`.
 - `middleware/auth.middleware.js`: `verifyToken`, `requireAdmin`, `optionalAuth` (JWT trong header `Authorization: Bearer`).
 - `middleware/rateLimit.middleware.js`: các limiter (`express-rate-limit`, lưu trong RAM nên restart là reset). `app.set('trust proxy', 1)` để lấy IP thật sau proxy Render.

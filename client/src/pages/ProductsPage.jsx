@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ProductCard from "../components/ProductCard";
 import CategoryIcon from "../components/CategoryIcon";
 import Dropdown from "../components/Dropdown";
+import Pagination from "../components/Pagination";
 import { getProducts, getCategories } from "../api/products";
+
+const PAGE_SIZE = 12; // lưới 4 cột x 3 hàng
 
 const SORT_OPTIONS = [
     { value: "newest-desc", label: "Mới nhất", sort: "newest", order: "desc" },
@@ -13,12 +16,19 @@ const SORT_OPTIONS = [
 ];
 
 function ProductsPage() {
-    const [products, setProducts] = useState([]);
+    const [result, setResult] = useState(null); // { items, total, totalPages, key }
     const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [sortValue, setSortValue] = useState("newest-desc");
     const [categoryValue, setCategoryValue] = useState("all");
+    const [page, setPage] = useState(1);
+    const listRef = useRef(null);
+
+    // Khoá của bộ lọc hiện tại, so với khoá của dữ liệu đã tải để biết đang chờ trang mới
+    const requestKey = `${sortValue}|${categoryValue}|${page}`;
+    const loading = !result && !error;
+    const stale = result && result.key !== requestKey;
+    const products = result ? result.items : [];
 
     // Lấy danh sách categories 1 lần khi mount
     useEffect(() => {
@@ -27,28 +37,48 @@ function ProductsPage() {
             .catch((err) => console.error("Lỗi tải categories:", err));
     }, []);
 
-    // Lấy danh sách sản phẩm, phụ thuộc vào sort + category
+    // Lấy 1 trang sản phẩm, phụ thuộc vào sort + category + page
     useEffect(() => {
         const selected =
             SORT_OPTIONS.find((o) => o.value === sortValue) || SORT_OPTIONS[0];
         const params = {
             sort: selected.sort,
             order: selected.order,
+            page,
+            limit: PAGE_SIZE,
         };
         if (categoryValue !== "all") {
             params.category = categoryValue;
         }
+        const key = `${sortValue}|${categoryValue}|${page}`;
 
+        // Bấm chuyển trang liên tục thì bỏ kết quả của request cũ về muộn
+        let ignore = false;
         getProducts(params)
             .then((data) => {
-                setProducts(data);
-                setLoading(false);
+                if (!ignore) setResult({ ...data, key });
             })
             .catch((err) => {
-                setError(err.message);
-                setLoading(false);
+                if (!ignore) setError(err.message);
             });
-    }, [sortValue, categoryValue]);
+        return () => {
+            ignore = true;
+        };
+    }, [sortValue, categoryValue, page]);
+
+    // Đổi bộ lọc thì quay về trang 1
+    const changeCategory = (value) => {
+        setCategoryValue(value);
+        setPage(1);
+    };
+    const changeSort = (value) => {
+        setSortValue(value);
+        setPage(1);
+    };
+    const changePage = (value) => {
+        setPage(value);
+        listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
 
     const selectedCategory = categories.find((c) => String(c.id) === String(categoryValue));
 
@@ -119,7 +149,7 @@ function ProductsPage() {
                                 type="button"
                                 role="tab"
                                 aria-selected={active}
-                                onClick={() => setCategoryValue(String(c.id))}
+                                onClick={() => changeCategory(String(c.id))}
                                 className={`flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-3 rounded-lg border bg-white transition-colors md:h-[120px] md:w-[120px] ${
                                     active
                                         ? "border-[#1A1A18] text-[#1A1A18]"
@@ -133,7 +163,7 @@ function ProductsPage() {
                     })}
                 </div>
 
-                <div className="mb-8 flex items-end justify-between gap-4">
+                <div ref={listRef} className="mb-8 flex scroll-mt-24 items-end justify-between gap-4">
                     <div>
                         <h2
                             className="text-2xl md:text-3xl text-[#1A1A18]"
@@ -143,7 +173,7 @@ function ProductsPage() {
                         </h2>
 
                         <p className="mt-2 text-sm text-[#6B6B65]">
-                            {products.length} sản phẩm
+                            {result.total} sản phẩm
                         </p>
                     </div>
 
@@ -151,23 +181,31 @@ function ProductsPage() {
                         label="Sắp xếp:"
                         value={sortValue}
                         options={SORT_OPTIONS}
-                        onChange={setSortValue}
+                        onChange={changeSort}
                     />
                 </div>
 
-                {products.length === 0 ? (
+                {products.length === 0 && !stale ? (
                     <div className="rounded-md border border-[#D9D6CC] bg-white py-16 text-center">
                         <p className="text-[#6B6B65]">
                             Chưa có sản phẩm nào.
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+                    // Đang tải trang mới thì làm mờ trang cũ thay vì xoá trắng, để bố cục không nhảy
+                    <div
+                        aria-busy={stale}
+                        className={`grid grid-cols-2 gap-4 transition-opacity md:grid-cols-3 md:gap-5 lg:grid-cols-4 ${
+                            stale ? "pointer-events-none opacity-50" : ""
+                        }`}
+                    >
                         {products.map((p) => (
                             <ProductCard key={p.id} product={p} />
                         ))}
                     </div>
                 )}
+
+                <Pagination page={page} totalPages={result.totalPages} onChange={changePage} />
             </section>
         </main>
     );

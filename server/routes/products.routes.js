@@ -2,6 +2,15 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/db");
 
+const DEFAULT_LIMIT = 12;
+const MAX_LIMIT = 48;
+
+// Đọc số nguyên dương từ query, sai hoặc thiếu thì dùng giá trị mặc định
+function positiveInt(value, fallback) {
+    const n = Number(value);
+    return Number.isInteger(n) && n >= 1 ? n : fallback;
+}
+
 router.get('/', async (req, res) => {
     const allowedSort = {
         name: "p.name",
@@ -18,6 +27,11 @@ router.get('/', async (req, res) => {
         ? order.toUpperCase()
         : "DESC";
 
+    // Không gửi page thì trả cả mảng như cũ: trang chủ cần hết, và client cũ vẫn chạy được nếu server deploy trước
+    const paginated = req.query.page !== undefined;
+    const page = positiveInt(req.query.page, 1);
+    const limit = Math.min(positiveInt(req.query.limit, DEFAULT_LIMIT), MAX_LIMIT);
+
     try {
         const params = [];
         let whereClause = "WHERE p.is_active = true";
@@ -25,6 +39,14 @@ router.get('/', async (req, res) => {
         if (category) {
             params.push(category);
             whereClause += ` AND p.category_id = $${params.length}`;
+        }
+        // Câu đếm dùng chung điều kiện lọc, chưa có tham số LIMIT/OFFSET
+        const filterParams = [...params];
+
+        let pageClause = "";
+        if (paginated) {
+            params.push(limit, (page - 1) * limit);
+            pageClause = `LIMIT $${params.length - 1} OFFSET $${params.length}`;
         }
 
         // min_price/variant_count: để thẻ sản phẩm hiện "Từ X đ" khi có nhiều phiên bản
@@ -42,10 +64,28 @@ router.get('/', async (req, res) => {
                  FROM product_variants
                  GROUP BY product_id
              ) v ON v.product_id = p.id
-             ${whereClause} ORDER BY ${sortColumn} ${sortOrder}`,
+             ${whereClause}
+             ORDER BY ${sortColumn} ${sortOrder}, p.id ${sortOrder}
+             ${pageClause}`,
             params
         );
-        res.json(result.rows);
+        // p.id ở ORDER BY để thứ tự cố định khi trùng tên/giá, không thì sản phẩm có thể lặp hoặc mất giữa các trang
+
+        if (!paginated) return res.json(result.rows);
+
+        // Đếm riêng để trang vượt quá cuối vẫn biết tổng số
+        const count = await pool.query(
+            `SELECT COUNT(*)::int AS total FROM products p ${whereClause}`,
+            filterParams
+        );
+        const total = count.rows[0].total;
+        res.json({
+            items: result.rows,
+            page,
+            limit,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / limit)),
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Lỗi server' });

@@ -59,6 +59,47 @@ describe('GET /api/products', () => {
         expect(big.body.limit).toBe(48);
     });
 
+    describe('tìm kiếm q', () => {
+        const names = (res) => res.body.items.map((p) => p.name).sort();
+
+        beforeEach(async () => {
+            const cat = (
+                await pool.query(`INSERT INTO categories (name, slug) VALUES ('Phụ kiện', 'phu-kien') RETURNING id`)
+            ).rows[0];
+            await createProduct({ name: 'Bàn phím cơ AKKO' });
+            await createProduct({ name: 'Chuột Logitech G102' });
+            const mouse = await createProduct({ name: 'Chuột Razer Viper' });
+            await pool.query('UPDATE products SET category_id = $1 WHERE id = $2', [cat.id, mouse.id]);
+            await createProduct({ name: 'Giảm giá 50%_đặc biệt' });
+        });
+
+        test('gõ không dấu, viết hoa vẫn tìm ra', async () => {
+            const res = await list({ page: 1, q: 'BAN PHIM' });
+            expect(names(res)).toEqual(['Bàn phím cơ AKKO']);
+        });
+
+        test('mỗi từ đều phải khớp', async () => {
+            const res = await list({ page: 1, q: 'chuot logitech' });
+            expect(names(res)).toEqual(['Chuột Logitech G102']);
+            expect(res.body.total).toBe(1);
+        });
+
+        test('tìm được theo tên danh mục', async () => {
+            const res = await list({ page: 1, q: 'phu kien' });
+            expect(names(res)).toEqual(['Chuột Razer Viper']);
+        });
+
+        test('% và _ được coi là ký tự thường', async () => {
+            expect(names(await list({ page: 1, q: '%' }))).toEqual(['Giảm giá 50%_đặc biệt']);
+            expect((await list({ page: 1, q: '_' })).body.total).toBe(1);
+        });
+
+        test('q rỗng thì trả hết, không tìm thấy thì trả rỗng', async () => {
+            expect((await list({ page: 1, q: '   ' })).body.total).toBe(4);
+            expect((await list({ page: 1, q: 'tủ lạnh' })).body).toMatchObject({ items: [], total: 0 });
+        });
+    });
+
     test('tổng số tính theo danh mục và bỏ qua sản phẩm ẩn', async () => {
         const cat = (
             await pool.query(`INSERT INTO categories (name, slug) VALUES ('Bàn phím', 'ban-phim') RETURNING id`)

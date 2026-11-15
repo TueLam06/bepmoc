@@ -11,6 +11,22 @@ function positiveInt(value, fallback) {
     return Number.isInteger(n) && n >= 1 ? n : fallback;
 }
 
+const MAX_QUERY_LENGTH = 100;
+const MAX_QUERY_WORDS = 8;
+
+// Tách từ khoá thành các từ, bỏ trống; giới hạn độ dài để không ai gửi chuỗi khổng lồ làm nặng query
+function searchWords(q) {
+    if (typeof q !== "string") return [];
+    return q.slice(0, MAX_QUERY_LENGTH).trim().split(/\s+/).filter(Boolean).slice(0, MAX_QUERY_WORDS);
+}
+
+// Thoát ký tự đặc biệt của LIKE, để khách gõ "%" hay "_" thì tìm đúng ký tự đó
+const escapeLike = (s) => s.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+
+// Chuỗi dùng để tìm: tên + mô tả ngắn + tên danh mục, bỏ dấu và viết thường
+// để "ban phim" hay "BÀN PHÍM" đều tìm ra "Bàn phím"
+const SEARCH_TEXT = `unaccent(lower(p.name || ' ' || COALESCE(p.short_description, '') || ' ' || COALESCE(c.name, '')))`;
+
 router.get('/', async (req, res) => {
     const allowedSort = {
         name: "p.name",
@@ -39,6 +55,12 @@ router.get('/', async (req, res) => {
         if (category) {
             params.push(category);
             whereClause += ` AND p.category_id = $${params.length}`;
+        }
+
+        // Mỗi từ phải xuất hiện ở đâu đó (AND), nên "chuột logitech" chỉ ra chuột của Logitech
+        for (const word of searchWords(req.query.q)) {
+            params.push(`%${escapeLike(word)}%`);
+            whereClause += ` AND ${SEARCH_TEXT} LIKE unaccent(lower($${params.length}))`;
         }
         // Câu đếm dùng chung điều kiện lọc, chưa có tham số LIMIT/OFFSET
         const filterParams = [...params];
@@ -75,7 +97,9 @@ router.get('/', async (req, res) => {
 
         // Đếm riêng để trang vượt quá cuối vẫn biết tổng số
         const count = await pool.query(
-            `SELECT COUNT(*)::int AS total FROM products p ${whereClause}`,
+            `SELECT COUNT(*)::int AS total
+             FROM products p LEFT JOIN categories c ON c.id = p.category_id
+             ${whereClause}`,
             filterParams
         );
         const total = count.rows[0].total;

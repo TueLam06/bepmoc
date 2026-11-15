@@ -9,6 +9,9 @@ const pool = require('./config/db');
 // cart_items: 1 sản phẩm có thể nằm trong giỏ nhiều lần với các phiên bản khác nhau (variant_id NULL = sản phẩm không có phiên bản)
 // order_items: lưu variant_name để đơn cũ vẫn hiển thị đúng khi phiên bản bị xoá
 pool.query(`
+    -- Bỏ dấu tiếng Việt khi tìm kiếm sản phẩm
+    CREATE EXTENSION IF NOT EXISTS unaccent;
+
     ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT true;
     ALTER TABLE users ALTER COLUMN email_verified SET DEFAULT false;
 

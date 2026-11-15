@@ -47,7 +47,7 @@ function validate(data) {
     else if (email.length > 255 || !EMAIL_REGEX.test(email)) errors.email = "Email không hợp lệ";
 
     const city = CITIES.find((c) => c.name === data.city);
-    if (!city) errors.city = "Vui lòng chọn thành phố";
+    if (!city) errors.city = "Vui lòng chọn tỉnh/thành phố";
     if (!city || !city.wards.includes(data.ward)) errors.ward = "Vui lòng chọn phường/xã";
 
     const street = data.street.trim();
@@ -194,7 +194,8 @@ function CheckoutPage() {
                         Mã đơn hàng <span className="text-[#1F2420] font-medium">#{orderResult.orderId}</span>
                     </p>
                     <p style={inter} className="text-[#6B6F63] mb-8">
-                        Tổng thanh toán: <span className="text-[#1F2420] font-medium">{formatVND(orderResult.total)}</span>
+                        Tiền hàng: <span className="text-[#1F2420] font-medium">{formatVND(orderResult.total)}</span>
+                        <span className="block text-sm">Phí vận chuyển shop sẽ báo khi gọi xác nhận đơn.</span>
                     </p>
                     <p style={inter} className="text-[#6B6F63] text-sm mb-8">
                         Thông tin đơn hàng đã được gửi tới{" "}
@@ -279,8 +280,14 @@ function CheckoutPage() {
                     ))}
                 </div>
 
-                <div className="border-t border-[#F5F3EE]/25 mt-4 pt-6 flex items-baseline justify-between">
-                    <span style={inter} className="text-[#B9C4AE] text-sm">Tổng cộng</span>
+                {/* Chưa có bảng phí ship: shop báo phí khi gọi xác nhận đơn */}
+                <div style={inter} className="border-t border-[#F5F3EE]/25 mt-4 pt-4 flex justify-between gap-4 text-sm">
+                    <span className="text-[#B9C4AE]">Phí vận chuyển</span>
+                    <span className="text-right text-[#D8E2D2]">Shop báo khi xác nhận đơn</span>
+                </div>
+
+                <div className="mt-4 pt-2 flex items-baseline justify-between">
+                    <span style={inter} className="text-[#B9C4AE] text-sm">Tiền hàng</span>
                     <span style={fraunces} className="text-4xl">{formatVND(total)}</span>
                 </div>
             </div>
@@ -388,19 +395,19 @@ function CheckoutPage() {
                     <fieldset className="space-y-4">
                         <legend className="block text-sm text-[#6B6F63] mb-1.5">
                             Địa chỉ giao hàng
-                            <span className="text-[#B0AC9C]"> (hiện chỉ giao tại Hà Nội và TP.HCM)</span>
+                            <span className="text-[#B0AC9C]"> (giao toàn quốc)</span>
                         </legend>
 
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <label htmlFor="city" className="sr-only">Thành phố</label>
+                                <label htmlFor="city" className="sr-only">Tỉnh/thành phố</label>
                                 <Combobox
                                     id="city"
                                     value={formData.city}
                                     options={cityOptions}
                                     onChange={(v) => setField("city", v)}
                                     onClose={() => markTouched("city")}
-                                    placeholder="Chọn thành phố"
+                                    placeholder="Chọn tỉnh/thành phố"
                                     searchable={false}
                                     invalid={Boolean(errorOf("city"))}
                                     describedBy="city-error"
@@ -416,7 +423,7 @@ function CheckoutPage() {
                                     options={wardOptions}
                                     onChange={(v) => setField("ward", v)}
                                     onClose={() => markTouched("ward")}
-                                    placeholder={selectedCity ? "Chọn phường/xã" : "Chọn thành phố trước"}
+                                    placeholder={selectedCity ? "Chọn phường/xã" : "Chọn tỉnh/thành phố trước"}
                                     searchPlaceholder="Tìm phường/xã, không cần gõ dấu"
                                     disabled={!selectedCity}
                                     invalid={Boolean(errorOf("ward"))}

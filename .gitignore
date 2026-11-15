@@ -8,3 +8,6 @@ ROADMAP.md
 
 # File gọi thử API cá nhân (có thể chứa token)
 *.http
+
+# Dữ liệu thật của shop (Excel, ảnh, dữ liệu lấy từ Shopee) và script đi kèm, không commit
+server/private/

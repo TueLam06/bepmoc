@@ -1,5 +1,6 @@
 import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import BrandLogo from "../../components/BrandLogo";
 
 const navItemClass = ({ isActive }) =>
     `block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -21,13 +22,7 @@ export default function AdminLayout() {
         <div className="min-h-screen bg-[#FAFAF8]">
             {/* Header ngang trên cùng */}
             <nav className="flex items-center justify-between px-6 py-4 bg-[#FAFAF8] border-b border-[#D9D6CC]">
-                <Link
-                    to="/admin"
-                    className="text-xl text-[#1A1A18]"
-                    style={{ fontFamily: "'Fraunces', serif" }}
-                >
-                    Bếp Mộc Linh Đan · Quản trị
-                </Link>
+                <BrandLogo to="/admin" suffix="Quản trị" />
 
                 <div className="flex items-center gap-6">
                     <Link

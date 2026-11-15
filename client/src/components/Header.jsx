@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import BrandLogo from "./BrandLogo";
 
-function Header({ title }) {
+function Header() {
     const { cartCount } = useCart();
     const { user, logout } = useAuth();
     const navigate = useNavigate();
@@ -16,14 +17,8 @@ function Header({ title }) {
         "text-[#1A1A18] hover:text-[#2F5233] transition-colors font-medium";
 
     return (
-        <nav className="flex items-center justify-between px-6 py-4 bg-[#FAFAF8] border-b border-[#D9D6CC]">
-            <Link
-                to="/"
-                className="text-xl text-[#1A1A18]"
-                style={{ fontFamily: "'Fraunces', serif" }}
-            >
-                {title}
-            </Link>
+        <nav className="flex items-center justify-between gap-6 px-6 py-3 bg-[#FAFAF8] border-b border-[#D9D6CC]">
+            <BrandLogo />
 
             <div className="flex items-center gap-6">
                 <Link to="/" className={linkClass}>

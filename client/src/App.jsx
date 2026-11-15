@@ -39,7 +39,7 @@ function App() {
                             path="/*"
                             element={
                                 <div className="min-h-screen flex flex-col">
-                                    <Header title="Bếp Mộc Linh Đan" />
+                                    <Header />
                                     <main className="flex-1">
                                         <Routes>
                                             <Route path="/" element={<HomePage />} />

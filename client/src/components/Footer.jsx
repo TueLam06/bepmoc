@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import BrandLogo from "./BrandLogo";
 
 function Footer({ title }) {
     const { user } = useAuth();
@@ -39,15 +40,9 @@ function Footer({ title }) {
                 {/* Phần link tới các mục */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
                     <div className="col-span-2 md:col-span-1">
-                        <Link
-                            to="/"
-                            className="text-xl text-[#1A1A18]"
-                            style={{ fontFamily: "'Fraunces', serif" }}
-                        >
-                            {title}
-                        </Link>
-                        <p className="text-sm text-[#6B6B65] mt-2 max-w-xs">
-                            Mua sắm dễ dàng, giao hàng an tâm.
+                        <BrandLogo />
+                        <p className="text-sm text-[#6B6B65] mt-3 max-w-xs">
+                            Đồ gỗ gia dụng làm thủ công, giao toàn quốc từ Hà Nội.
                         </p>
                     </div>
 

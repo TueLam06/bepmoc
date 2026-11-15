@@ -16,7 +16,7 @@ async function sendMail({ to, subject, html }) {
         body: JSON.stringify({
             sender: {
                 email: process.env.MAIL_FROM_EMAIL,
-                name: process.env.MAIL_FROM_NAME || 'Stuff Corner',
+                name: process.env.MAIL_FROM_NAME || 'Bếp Mộc Linh Đan',
             },
             to: [{ email: to }],
             subject,

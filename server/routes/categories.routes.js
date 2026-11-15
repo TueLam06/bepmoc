@@ -5,7 +5,7 @@ const pool = require("../config/db");
 router.get('/', async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT id, name, slug FROM categories ORDER BY name ASC'
+            'SELECT id, name, slug FROM categories ORDER BY sort_order, name'
         );
         res.json(result.rows);
     } catch (err) {

@@ -2,7 +2,7 @@
 
 Monorepo gồm 2 phần, mỗi phần có `package.json` và `node_modules` riêng (không dùng workspaces):
 
-- `client/`: React 19 + Vite + Tailwind 4 + DaisyUI, deploy trên **Vercel** (https://stuffcorner-jet.vercel.app)
+- `client/`: React 19 + Vite + Tailwind 4 + DaisyUI, deploy trên **Cloudflare Pages** (https://stuffcorner.pages.dev)
 - `server/`: Express 5 + PostgreSQL (`pg`, database trên Neon), deploy trên **Render** (https://stuff-corner.onrender.com)
 
 Repo: `TueLam06/ecommerce-project`. Được gộp từ 2 repo cũ `ecommerce-client` và `ecommerce-server` bằng `git subtree`, nên commit cũ không có tiền tố `client/` hay `server/` trong đường dẫn (muốn xem lịch sử thì dùng `git log -- server.js` theo đường dẫn cũ).
@@ -55,14 +55,16 @@ cd client && npm install && npm run dev   # http://localhost:5173
 
 ## Deploy
 
-- Push lên `main` thì Vercel và Render tự deploy (Render cần bật **Auto-Deploy: On Commit**, nếu không phải bấm Manual Deploy).
-- Vercel: Root Directory `client`, preset Vite. `client/vercel.json` rewrite mọi đường dẫn về `index.html` cho SPA.
-- Render: Root Directory `server`, build `npm install`, start `npm start`. Biến môi trường nhập trong mục Environment; `CLIENT_URL` phải là URL Vercel (link trong email dùng biến này).
+- Push lên `main` thì Cloudflare Pages và Render tự deploy (Render cần bật **Auto-Deploy: On Commit**, nếu không phải bấm Manual Deploy).
+- Cloudflare Pages: project `stuffcorner`, Root Directory `client`, preset React (Vite), output `dist`. Pages tự trả `index.html` cho mọi đường dẫn (SPA) vì `dist` không có `404.html`. Mỗi nhánh có bản xem trước ở `<nhánh>.stuffcorner.pages.dev`.
+- Vercel (cũ, https://stuffcorner-jet.vercel.app): chỉ còn `client/vercel.json` chuyển hướng 301 mọi đường dẫn sang pages.dev, để link trong email đơn hàng cũ vẫn mở được. Không gỡ file này cho tới khi xoá project Vercel.
+- Render: Root Directory `server`, build `npm install`, start `npm start`. Biến môi trường nhập trong mục Environment; `CLIENT_URL` phải là `https://stuffcorner.pages.dev` (link trong email dùng biến này).
 - Brevo: tài khoản free có bọc link để đếm lượt bấm (tracking), và link bọc từng trả 404. Mail xác thực vì thế có thêm link dạng chữ dưới nút. Đã tắt chặn IP lạ (Authorised IPs) để Render gửi được.
 
 ## Quy ước
 
-- Commit message tiếng Việt, tiền tố `feat:` / `fix:` / `style:` / `ref:` / `chore:` (có thể có scope như `feat(admin):`), tiêu đề ngắn, chữ thường, thân là các gạch đầu dòng `- `. **Không** thêm dòng `Co-Authored-By`.
+- Commit message tiếng Việt, tiền tố `feat:` / `fix:` / `style:` / `ref:` / `chore:` (có thể có scope như `feat(admin):`), chữ thường, **chỉ 1 dòng ngắn gọn, không có thân**. **Không** thêm dòng `Co-Authored-By`.
+- Mỗi file một commit, commit lần lượt theo đúng thứ tự file đó được sửa. Riêng các file gắn chặt với cùng một chức năng (ví dụ route + test của route đó, component + trang dùng nó) thì được gộp chung một commit.
 - Comment trong code bằng tiếng Việt, ngắn, giải thích lý do.
 - Server dùng CommonJS (`require`), client dùng ES modules.
 - `ROADMAP.md` và `.claude/` là ghi chú cá nhân, đã được gitignore.

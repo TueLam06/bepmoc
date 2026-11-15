@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { createVariant, updateVariant, deleteVariant } from "../api/adminProducts";
-
-// Ảnh nhỏ xem trước: ảnh Cloudinary thì xin bản thu nhỏ
-function thumbnail(url) {
-    return url.includes("/image/upload/") ? url.replace("/image/upload/", "/image/upload/w_96,h_96,c_pad,b_white/") : url;
-}
+import { imageUrl } from "../../utils/image";
 
 // Ô nhập link ảnh phiên bản + ảnh xem trước (bỏ trống = dùng ảnh sản phẩm)
 function ImageField({ value, onChange }) {
     return (
         <div className="flex items-center gap-2">
             <div className="h-10 w-10 shrink-0 overflow-hidden rounded border border-[#E5E3DC] bg-[#F5F3EE]">
-                {value && <img src={thumbnail(value)} alt="" className="h-full w-full object-contain" />}
+                {value && <img src={imageUrl(value, 96, { square: true })} alt="" className="h-full w-full object-contain" />}
             </div>
             <input
                 className={inputClass}

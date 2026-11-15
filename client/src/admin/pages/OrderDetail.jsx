@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getOrderById, updateOrderStatus } from "../api/adminOrders";
+import { imageUrl } from "../../utils/image";
 
 const STATUS_LABELS = {
     pending: "Chờ xác nhận",
@@ -186,7 +187,7 @@ export default function OrderDetail() {
                             <td className="px-4 py-3">
                                 {item.image ? (
                                     <img
-                                        src={item.image}
+                                        src={imageUrl(item.image, 80)}
                                         alt={item.product_name}
                                         className="w-10 h-10 object-cover rounded"
                                     />

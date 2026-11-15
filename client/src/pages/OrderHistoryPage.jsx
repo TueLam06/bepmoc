@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMyOrders, cancelMyOrder } from "../api/orders";
 import { STATUS_LABELS, STATUS_BADGE } from "../constants/orderStatus";
+import { imageUrl } from "../utils/image";
 
 const fraunces = { fontFamily: "'Fraunces', serif" };
 const inter = { fontFamily: "'Inter', sans-serif" };
@@ -124,7 +125,7 @@ function OrderHistoryPage() {
                                     <div key={item.id} className="flex items-center gap-4 py-3">
                                         {item.image ? (
                                             <img
-                                                src={item.image}
+                                                src={imageUrl(item.image, 112)}
                                                 alt={item.product_name}
                                                 className="w-14 h-14 object-cover rounded-sm flex-shrink-0"
                                             />

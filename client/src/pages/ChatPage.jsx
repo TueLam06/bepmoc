@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { sendChatMessage } from "../api/chat";
+import { imageUrl } from "../utils/image";
 
 function ChatPage() {
     const [messages, setMessages] = useState([]);
@@ -199,7 +200,7 @@ function ChatPage() {
                                                         >
                                                             {p.image && (
                                                                 <img
-                                                                    src={p.image}
+                                                                    src={imageUrl(p.image, 80)}
                                                                     alt=""
                                                                     className="h-10 w-10 shrink-0 rounded object-cover bg-[#F5F3EE]"
                                                                 />

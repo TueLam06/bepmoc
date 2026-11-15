@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { STATUS_LABELS } from "../constants/orderStatus";
+import { imageUrl } from "../utils/image";
 
 const fraunces = { fontFamily: "'Fraunces', serif" };
 
@@ -97,7 +98,7 @@ function OrderDetailView({ order }) {
                             <div key={item.id} className="flex items-center gap-4 py-3">
                                 {item.image ? (
                                     <img
-                                        src={item.image}
+                                        src={imageUrl(item.image, 112)}
                                         alt={item.product_name}
                                         className="w-14 h-14 object-cover rounded-sm flex-shrink-0"
                                     />

@@ -2,11 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import Price from "./Price";
-
-// Ảnh nhỏ cho ô chọn màu: ảnh Cloudinary thì xin bản thu nhỏ
-function thumbnail(url) {
-    return url?.includes("/image/upload/") ? url.replace("/image/upload/", "/image/upload/w_64,h_64,c_pad,b_white/") : url;
-}
+import { imageUrl } from "../utils/image";
 
 const MAX_CHIPS = 4;
 
@@ -49,7 +45,7 @@ function ProductCard({ product }) {
                     {image && (
                         <img
                             key={image}
-                            src={image}
+                            src={imageUrl(image, 600)}
                             alt={variant ? `${product.name} - ${variant.name}` : product.name}
                             loading="lazy"
                             className="variant-image-in h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -102,7 +98,7 @@ function ProductCard({ product }) {
                                 >
                                     {hasVariantImages ? (
                                         <img
-                                            src={thumbnail(v.image || product.image)}
+                                            src={imageUrl(v.image || product.image, 64, { square: true })}
                                             alt=""
                                             className="h-7 w-7 rounded object-contain bg-[#F5F3EE]"
                                         />

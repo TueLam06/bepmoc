@@ -3,11 +3,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { getProductById } from "../api/products";
 import Price from "../components/Price";
-
-// Ảnh nhỏ cho nút chọn phiên bản: ảnh Cloudinary thì xin bản thu nhỏ, ảnh khác giữ nguyên
-function thumbnail(url) {
-    return url?.includes("/image/upload/") ? url.replace("/image/upload/", "/image/upload/w_96,h_96,c_pad,b_white/") : url;
-}
+import { imageUrl } from "../utils/image";
 
 // description: mỗi dòng "Nhãn: giá trị" thành 1 dòng bảng thông số; dòng không có nhãn giữ nguyên là văn bản
 function parseSpecs(description) {
@@ -116,7 +112,7 @@ function ProductDetailPage() {
                             <div className="aspect-square bg-[#F5F3EE]">
                                 <img
                                     key={imageSrc}
-                                    src={imageSrc}
+                                    src={imageUrl(imageSrc, 1200)}
                                     alt={variant ? `${product.name} - ${variant.name}` : product.name}
                                     className="variant-image-in h-full w-full object-cover"
                                 />
@@ -180,7 +176,7 @@ function ProductDetailPage() {
                                             >
                                                 {hasVariantImages && (
                                                     <img
-                                                        src={thumbnail(v.image || product.image)}
+                                                        src={imageUrl(v.image || product.image, 96, { square: true })}
                                                         alt=""
                                                         className="h-10 w-10 rounded object-contain bg-[#F5F3EE]"
                                                     />

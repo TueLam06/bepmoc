@@ -16,6 +16,35 @@ async function uploadImageUrl(url) {
     return result.secure_url;
 }
 
+// SKU: viết hoa, chỉ chữ/số/gạch ngang. undefined = không gửi (giữ nguyên), null = bỏ mã, false = sai định dạng
+function parseSku(value) {
+    if (value === undefined) return undefined;
+    const s = String(value ?? "").trim().toUpperCase();
+    if (!s) return null;
+    return /^[A-Z0-9-]{1,50}$/.test(s) ? s : false;
+}
+
+// Giá gốc: undefined = không gửi, null = không giảm giá, false = không hợp lệ
+function parseOriginalPrice(value) {
+    if (value === undefined) return undefined;
+    if (value === null || value === "") return null;
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : false;
+}
+
+// Kiểm tra sku + giá gốc so với giá bán cuối cùng; trả về chuỗi lỗi hoặc null
+function validatePricing(sku, originalPrice, price) {
+    if (sku === false) return "Mã SKU chỉ gồm chữ, số, gạch ngang, tối đa 50 ký tự";
+    if (originalPrice === false) return "Giá gốc không hợp lệ";
+    if (originalPrice != null && originalPrice <= Number(price)) return "Giá gốc phải lớn hơn giá bán";
+    return null;
+}
+
+// Lỗi trùng SKU (unique index) thì báo rõ, lỗi trùng khác trả null để xử lý riêng
+function duplicateSkuError(err) {
+    return err.code === "23505" && /sku/.test(err.constraint || "") ? "Mã SKU đã được dùng cho sản phẩm khác" : null;
+}
+
 // GET /api/admin/products - admin xem TẤT CẢ, kể cả sản phẩm đã ẩn
 router.get("/", async (req, res) => {
     try {
@@ -40,7 +69,7 @@ router.get("/", async (req, res) => {
 router.get("/categories", async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT id, name FROM categories ORDER BY name"
+            "SELECT id, name FROM categories ORDER BY sort_order, name"
         );
         res.json(result.rows);
     } catch (err) {
@@ -61,7 +90,7 @@ router.get("/:id", async (req, res) => {
             return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
         }
         const variants = await pool.query(
-            "SELECT id, name, price, stock, image FROM product_variants WHERE product_id = $1 ORDER BY sort_order, id",
+            "SELECT id, name, price, stock, image, sku, original_price FROM product_variants WHERE product_id = $1 ORDER BY sort_order, id",
             [id]
         );
         res.json({ ...result.rows[0], variants: variants.rows });
@@ -81,6 +110,10 @@ router.post("/", async (req, res) => {
     if (Number(price) < 0 || Number(stock) < 0) {
         return res.status(400).json({ error: "price/stock không được âm" });
     }
+    const sku = parseSku(req.body.sku);
+    const originalPrice = parseOriginalPrice(req.body.original_price);
+    const invalid = validatePricing(sku, originalPrice, price);
+    if (invalid) return res.status(400).json({ error: invalid });
 
     let image;
     try {
@@ -92,12 +125,15 @@ router.post("/", async (req, res) => {
 
     try {
         const result = await pool.query(
-            `INSERT INTO products (name, price, stock, description, short_description, image, category_id, is_active)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, true) RETURNING *`,
-            [name, price, stock, description || null, short_description || null, image, category_id || null]
+            `INSERT INTO products (name, price, stock, description, short_description, image, category_id, sku, original_price, is_active)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true) RETURNING *`,
+            [name, price, stock, description || null, short_description || null, image, category_id || null,
+                sku ?? null, originalPrice ?? null]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
+        const dup = duplicateSkuError(err);
+        if (dup) return res.status(400).json({ error: dup });
         console.error("POST /admin/products error:", err);
         res.status(500).json({ error: "Lỗi server khi tạo sản phẩm" });
     }
@@ -120,6 +156,13 @@ router.put("/:id", async (req, res) => {
         }
         const current = existing.rows[0];
 
+        // Giá gốc so với giá bán sau khi sửa (gửi thiếu trường nào thì lấy giá trị đang có)
+        const sku = parseSku(req.body.sku);
+        const originalPrice = parseOriginalPrice(req.body.original_price);
+        const finalOriginal = originalPrice === undefined ? current.original_price : originalPrice;
+        const invalid = validatePricing(sku, finalOriginal, price ?? current.price);
+        if (invalid) return res.status(400).json({ error: invalid });
+
         // Chỉ upload khi admin đổi sang URL ảnh mới
         let image = current.image;
         if (image_url !== undefined && image_url !== current.image) {
@@ -133,8 +176,9 @@ router.put("/:id", async (req, res) => {
 
         const result = await pool.query(
             `UPDATE products
-             SET name = $1, price = $2, description = $3, short_description = $4, image = $5, category_id = $6
-             WHERE id = $7 RETURNING *`,
+             SET name = $1, price = $2, description = $3, short_description = $4, image = $5, category_id = $6,
+                 sku = $7, original_price = $8
+             WHERE id = $9 RETURNING *`,
             [
                 name ?? current.name,
                 price ?? current.price,
@@ -142,11 +186,15 @@ router.put("/:id", async (req, res) => {
                 short_description !== undefined ? short_description || null : current.short_description,
                 image,
                 category_id ?? current.category_id,
+                sku === undefined ? current.sku : sku,
+                finalOriginal,
                 id,
             ]
         );
         res.json(result.rows[0]);
     } catch (err) {
+        const dup = duplicateSkuError(err);
+        if (dup) return res.status(400).json({ error: dup });
         console.error("PUT /admin/products/:id error:", err);
         res.status(500).json({ error: "Lỗi server khi cập nhật sản phẩm" });
     }
@@ -250,6 +298,20 @@ function validateVariant({ name, price, stock, image }) {
     return null;
 }
 
+// Đọc sku + giá gốc của phiên bản; trả về { sku, originalPrice } hoặc { error }
+function parseVariantPricing(body) {
+    const sku = parseSku(body.sku);
+    const originalPrice = parseOriginalPrice(body.original_price);
+    const error = validatePricing(sku, originalPrice, body.price);
+    return error ? { error } : { sku, originalPrice };
+}
+
+// Báo lỗi trùng của phiên bản: trùng SKU hay trùng tên trong cùng sản phẩm
+function variantDuplicateError(err) {
+    if (err.code !== "23505") return null;
+    return duplicateSkuError(err) || "Tên phiên bản đã tồn tại trong sản phẩm này";
+}
+
 // Ảnh phiên bản: link ngoài thì upload lên Cloudinary, bỏ trống thì dùng ảnh sản phẩm (NULL)
 // Trả về { image } hoặc gửi lỗi 400 và trả về null
 async function resolveVariantImage(req, res) {
@@ -262,12 +324,14 @@ async function resolveVariantImage(req, res) {
     }
 }
 
-// POST /api/admin/products/:id/variants - thêm phiên bản (vd "16GB RAM / 512GB SSD", "Màu bạc")
-// body: { name, price, stock, image? }
+// POST /api/admin/products/:id/variants - thêm phiên bản (vd "1 đôi", "Bộ 10 đôi", "Gỗ trắc")
+// body: { name, price, stock, image?, sku?, original_price? }
 router.post("/:id/variants", async (req, res) => {
     const { id } = req.params;
     const invalid = validateVariant(req.body);
     if (invalid) return res.status(400).json({ error: invalid });
+    const pricing = parseVariantPricing(req.body);
+    if (pricing.error) return res.status(400).json({ error: pricing.error });
 
     const uploaded = await resolveVariantImage(req, res);
     if (!uploaded) return;
@@ -282,11 +346,12 @@ router.post("/:id/variants", async (req, res) => {
         }
 
         const result = await client.query(
-            `INSERT INTO product_variants (product_id, name, price, stock, image, sort_order)
-             VALUES ($1, $2, $3, $4, $5,
+            `INSERT INTO product_variants (product_id, name, price, stock, image, sku, original_price, sort_order)
+             VALUES ($1, $2, $3, $4, $5, $6, $7,
                      COALESCE((SELECT MAX(sort_order) + 1 FROM product_variants WHERE product_id = $1), 0))
-             RETURNING id, name, price, stock, image`,
-            [id, req.body.name.trim(), Number(req.body.price), Number(req.body.stock), uploaded.image]
+             RETURNING id, name, price, stock, image, sku, original_price`,
+            [id, req.body.name.trim(), Number(req.body.price), Number(req.body.stock), uploaded.image,
+                pricing.sku ?? null, pricing.originalPrice ?? null]
         );
         // Sản phẩm đã chuyển sang dạng có phiên bản: dòng giỏ cũ không chọn phiên bản không còn hợp lệ
         await client.query("DELETE FROM cart_items WHERE product_id = $1 AND variant_id IS NULL", [id]);
@@ -295,9 +360,8 @@ router.post("/:id/variants", async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (err) {
         await client.query("ROLLBACK");
-        if (err.code === "23505") {
-            return res.status(400).json({ error: "Tên phiên bản đã tồn tại trong sản phẩm này" });
-        }
+        const dup = variantDuplicateError(err);
+        if (dup) return res.status(400).json({ error: dup });
         console.error("POST /admin/products/:id/variants error:", err);
         res.status(500).json({ error: "Lỗi server khi thêm phiên bản" });
     } finally {
@@ -305,30 +369,36 @@ router.post("/:id/variants", async (req, res) => {
     }
 });
 
-// PUT /api/admin/products/:id/variants/:variantId - sửa tên/giá/tồn kho/ảnh phiên bản
+// PUT /api/admin/products/:id/variants/:variantId - sửa tên/giá/tồn kho/ảnh/sku/giá gốc phiên bản
+// sku/original_price không gửi thì giữ nguyên, gửi rỗng thì xoá
 router.put("/:id/variants/:variantId", async (req, res) => {
     const { id, variantId } = req.params;
     const invalid = validateVariant(req.body);
     if (invalid) return res.status(400).json({ error: invalid });
+    const pricing = parseVariantPricing(req.body);
+    if (pricing.error) return res.status(400).json({ error: pricing.error });
 
     const uploaded = await resolveVariantImage(req, res);
     if (!uploaded) return;
 
     try {
         const result = await pool.query(
-            `UPDATE product_variants SET name = $1, price = $2, stock = $3, image = $4
+            `UPDATE product_variants SET name = $1, price = $2, stock = $3, image = $4,
+                 sku = CASE WHEN $7 THEN $8 ELSE sku END,
+                 original_price = CASE WHEN $9 THEN $10::numeric ELSE original_price END
              WHERE id = $5 AND product_id = $6
-             RETURNING id, name, price, stock, image`,
-            [req.body.name.trim(), Number(req.body.price), Number(req.body.stock), uploaded.image, variantId, id]
+             RETURNING id, name, price, stock, image, sku, original_price`,
+            [req.body.name.trim(), Number(req.body.price), Number(req.body.stock), uploaded.image, variantId, id,
+                pricing.sku !== undefined, pricing.sku ?? null,
+                pricing.originalPrice !== undefined, pricing.originalPrice ?? null]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "Không tìm thấy phiên bản" });
         }
         res.json(result.rows[0]);
     } catch (err) {
-        if (err.code === "23505") {
-            return res.status(400).json({ error: "Tên phiên bản đã tồn tại trong sản phẩm này" });
-        }
+        const dup = variantDuplicateError(err);
+        if (dup) return res.status(400).json({ error: dup });
         console.error("PUT /admin/products/:id/variants/:variantId error:", err);
         res.status(500).json({ error: "Lỗi server khi cập nhật phiên bản" });
     }

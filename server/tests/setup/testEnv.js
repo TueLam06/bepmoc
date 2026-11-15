@@ -4,7 +4,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 const SERVER_DIR = path.join(__dirname, '..', '..');
-const PRODUCTION_HOST_PREFIX = 'ep-square-recipe-';
+const PRODUCTION_HOST_PREFIX = 'ep-weathered-wave-';
 
 function loadTestEnv() {
     const file = path.join(SERVER_DIR, '.env.test');

@@ -36,7 +36,10 @@ function ProductDetailPage() {
     // Phiên bản có ảnh riêng (vd mỗi màu một ảnh) thì hiện ảnh đó, không thì dùng ảnh sản phẩm
     const imageSrc = variant?.image || product?.image;
     const hasVariantImages = variants.some((v) => v.image);
-    const specs = parseSpecs(product?.description);
+    // Đoạn văn giới thiệu và bảng thông số hiện riêng
+    const specLines = parseSpecs(product?.description);
+    const specs = specLines.filter((s) => s.label);
+    const paragraphs = specLines.filter((s) => s.text).map((s) => s.text);
 
     // Tải sẵn ảnh các phiên bản để bấm đổi không bị nháy trắng
     useEffect(() => {
@@ -218,33 +221,40 @@ function ProductDetailPage() {
                     </div>
                 </div>
 
-                {specs.length > 0 && (
+                {paragraphs.length > 0 && (
                     <div className="mt-14 max-w-3xl">
                         <h2
                             className="mb-4 text-2xl text-[#1A1A18]"
                             style={{ fontFamily: "'Fraunces', serif" }}
                         >
-                            Thông số kỹ thuật
+                            Mô tả sản phẩm
+                        </h2>
+                        <div className="space-y-3 text-[15px] leading-7 text-[#3A3A36]">
+                            {paragraphs.map((text, i) => (
+                                <p key={i}>{text}</p>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {specs.length > 0 && (
+                    <div className="mt-10 max-w-3xl">
+                        <h2
+                            className="mb-4 text-2xl text-[#1A1A18]"
+                            style={{ fontFamily: "'Fraunces', serif" }}
+                        >
+                            Thông số
                         </h2>
                         <dl className="rounded-lg border border-[#D9D6CC] bg-white">
-                            {specs.map((s, i) =>
-                                s.label ? (
-                                    <div
-                                        key={i}
-                                        className="grid grid-cols-[9rem_1fr] gap-4 border-b border-[#EFEDE6] px-5 py-3 text-sm last:border-b-0 sm:grid-cols-[12rem_1fr]"
-                                    >
-                                        <dt className="text-[#6B6B65]">{s.label}</dt>
-                                        <dd className="text-[#1A1A18]">{s.value}</dd>
-                                    </div>
-                                ) : (
-                                    <p
-                                        key={i}
-                                        className="border-b border-[#EFEDE6] px-5 py-3 text-sm text-[#1A1A18] last:border-b-0"
-                                    >
-                                        {s.text}
-                                    </p>
-                                )
-                            )}
+                            {specs.map((s, i) => (
+                                <div
+                                    key={i}
+                                    className="grid grid-cols-[9rem_1fr] gap-4 border-b border-[#EFEDE6] px-5 py-3 text-sm last:border-b-0 sm:grid-cols-[12rem_1fr]"
+                                >
+                                    <dt className="text-[#6B6B65]">{s.label}</dt>
+                                    <dd className="text-[#1A1A18]">{s.value}</dd>
+                                </div>
+                            ))}
                         </dl>
                     </div>
                 )}

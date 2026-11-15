@@ -48,6 +48,17 @@ pool.query(`
     ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS ward VARCHAR(100);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS street VARCHAR(150);
+
+    -- Mã hàng của shop và giá gốc (hiện giá gạch ngang), cho cả sản phẩm và phiên bản
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS sku VARCHAR(50);
+    ALTER TABLE products ADD COLUMN IF NOT EXISTS original_price NUMERIC(10, 2);
+    CREATE UNIQUE INDEX IF NOT EXISTS products_sku_key ON products (sku);
+    ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS sku VARCHAR(50);
+    ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS original_price NUMERIC(10, 2);
+    CREATE UNIQUE INDEX IF NOT EXISTS product_variants_sku_key ON product_variants (sku);
+
+    -- Thứ tự danh mục theo cách shop sắp
+    ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
 `)
     .then(() => {
         app.listen(PORT, () => {

@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     slug VARCHAR(100) NOT NULL UNIQUE,
-    created_at TIMESTAMP NOT NULL DEFAULT now()
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    -- Thứ tự hiện ở trang Sản phẩm, theo cách shop sắp danh mục chứ không theo ABC
+    sort_order INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS products (
@@ -37,9 +39,14 @@ CREATE TABLE IF NOT EXISTS products (
     feature BOOLEAN DEFAULT false,
     category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
-    short_description VARCHAR(200)
+    short_description VARCHAR(200),
+    -- Mã hàng của shop (vd CTL756), dùng để đối chiếu với Shopee/file Excel
+    sku VARCHAR(50),
+    -- Giá trước khi giảm, NULL hoặc không lớn hơn price thì không hiện giá gạch ngang
+    original_price NUMERIC(10, 2)
 );
 CREATE INDEX IF NOT EXISTS idx_products_category_id ON products (category_id);
+CREATE UNIQUE INDEX IF NOT EXISTS products_sku_key ON products (sku);
 
 -- Sản phẩm có phiên bản thì giá/tồn kho lấy theo phiên bản, không thì dùng products.price/stock
 CREATE TABLE IF NOT EXISTS product_variants (
@@ -51,8 +58,11 @@ CREATE TABLE IF NOT EXISTS product_variants (
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     image TEXT,
+    sku VARCHAR(50),
+    original_price NUMERIC(10, 2),
     UNIQUE (product_id, name)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS product_variants_sku_key ON product_variants (sku);
 
 CREATE TABLE IF NOT EXISTS cart_items (
     id SERIAL PRIMARY KEY,

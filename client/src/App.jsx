@@ -10,6 +10,7 @@ import ProductsPage from "./pages/ProductsPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import PaymentResultPage from "./pages/PaymentResultPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
@@ -48,6 +49,7 @@ function App() {
                                             <Route path="/chat" element={<ChatPage />} />
                                             <Route path="/cart" element={<CartPage />} />
                                             <Route path="/checkout" element={<CheckoutPage />} />
+                                            <Route path="/payment-result" element={<PaymentResultPage />} />
                                             <Route path="/track-order" element={<TrackOrderPage />} />
                                             <Route path="/login" element={<LoginPage h/>} />
                                             <Route path="/register" element={<RegisterPage />} />

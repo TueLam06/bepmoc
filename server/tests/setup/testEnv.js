@@ -3,8 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 
+const { PRODUCTION_HOST_PREFIX } = require('../../db/guard');
+
 const SERVER_DIR = path.join(__dirname, '..', '..');
-const PRODUCTION_HOST_PREFIX = 'ep-weathered-wave-';
 
 function loadTestEnv() {
     const file = path.join(SERVER_DIR, '.env.test');

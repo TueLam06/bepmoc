@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { createOrder, saveLastGuestOrder } from "../api/orders";
 import { CITIES } from "../constants/vnAddress";
 import Combobox from "../components/Combobox";
+import { PAYMENT_METHODS } from "../constants/payment";
 
 const fraunces = { fontFamily: "'Fraunces', serif" };
 const inter = { fontFamily: "'Inter', sans-serif" };
@@ -87,6 +88,7 @@ function CheckoutPage() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [orderResult, setOrderResult] = useState(null); // { orderId, total } khi thành công
+    const [paymentMethod, setPaymentMethod] = useState("cod");
 
     const fieldErrors = validate(formData);
     const selectedCity = CITIES.find((c) => c.name === formData.city);
@@ -150,6 +152,7 @@ function CheckoutPage() {
             phone,
             email: formData.email.trim(),
             address: `${formData.street.trim()}, ${formData.ward}, ${formData.city}`,
+            payment_method: paymentMethod,
             ...(!token && {
                 cart: cart.map((item) => ({ id: item.id, variant_id: item.variant_id ?? null, quantity: item.quantity })),
             }),
@@ -157,9 +160,17 @@ function CheckoutPage() {
 
         try {
             const data = await createOrder(body, token);
+            if (!token) saveLastGuestOrder(data.orderId, phone);
+
+            // Đơn VNPay: đơn đã tạo và giữ hàng, chuyển sang trang VNPay để trả tiền.
+            // VNPay trả khách về /payment-result, nên xoá giỏ luôn ở đây
+            if (data.paymentUrl) {
+                clearCart();
+                window.location.assign(data.paymentUrl);
+                return;
+            }
 
             setOrderResult({ orderId: data.orderId, total: data.total, phone, email: body.email });
-            if (!token) saveLastGuestOrder(data.orderId, phone);
             clearCart();
         } catch (err) {
             setError(err.message || "Có lỗi xảy ra, vui lòng thử lại.");
@@ -434,6 +445,48 @@ function CheckoutPage() {
                         </div>
                     </fieldset>
 
+                    <fieldset>
+                        <legend className="block text-sm text-[#6B6F63] mb-1.5">Phương thức thanh toán</legend>
+                        <div className="space-y-3">
+                            {PAYMENT_METHODS.map((m) => {
+                                const checked = paymentMethod === m.value;
+                                return (
+                                    <label
+                                        key={m.value}
+                                        className={`flex items-start gap-3 rounded-sm border px-4 py-3.5 transition-colors ${
+                                            m.disabled
+                                                ? "cursor-not-allowed border-[#E5E3DC] opacity-60"
+                                                : checked
+                                                  ? "cursor-pointer border-[#2F5233] bg-[#2F5233]/[0.04]"
+                                                  : "cursor-pointer border-[#DAD6C9] hover:border-[#B0AC9C]"
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="payment_method"
+                                            value={m.value}
+                                            checked={checked}
+                                            disabled={m.disabled}
+                                            onChange={() => setPaymentMethod(m.value)}
+                                            className="mt-1 accent-[#2F5233]"
+                                        />
+                                        <span className="flex-1">
+                                            <span className="flex flex-wrap items-center gap-2 text-[15px] text-[#1F2420]">
+                                                {m.label}
+                                                {m.disabled && (
+                                                    <span className="rounded-full bg-[#ECEAE3] px-2 py-0.5 text-xs text-[#6B6F63]">
+                                                        Sắp có
+                                                    </span>
+                                                )}
+                                            </span>
+                                            <span className="block text-sm text-[#6B6F63]">{m.hint}</span>
+                                        </span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </fieldset>
+
                     {error && <p className="text-[#B3413B] text-sm -mt-2">{error}</p>}
 
                     <button
@@ -441,7 +494,11 @@ function CheckoutPage() {
                         disabled={submitting}
                         className="w-full py-3 bg-[#2F5233] text-[#F5F3EE] rounded-sm hover:bg-[#26401E] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                     >
-                        {submitting ? "Đang xử lý..." : `Đặt hàng — ${formatVND(total)}`}
+                        {submitting
+                            ? "Đang xử lý..."
+                            : paymentMethod === "vnpay"
+                              ? `Thanh toán qua VNPay — ${formatVND(total)}`
+                              : `Đặt hàng — ${formatVND(total)}`}
                     </button>
                 </form>
             </div>

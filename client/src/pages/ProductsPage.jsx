@@ -22,10 +22,13 @@ function ProductsPage() {
     const [sortValue, setSortValue] = useState("newest-desc");
     const [categoryValue, setCategoryValue] = useState("all");
     const [page, setPage] = useState(1);
+    const [searchInput, setSearchInput] = useState(""); // chữ đang gõ trong ô
+    const [query, setQuery] = useState(""); // từ khoá đã gửi lên server
     const listRef = useRef(null);
+    const searchTimer = useRef(null);
 
     // Khoá của bộ lọc hiện tại, so với khoá của dữ liệu đã tải để biết đang chờ trang mới
-    const requestKey = `${sortValue}|${categoryValue}|${page}`;
+    const requestKey = `${sortValue}|${categoryValue}|${page}|${query}`;
     const loading = !result && !error;
     const stale = result && result.key !== requestKey;
     const products = result ? result.items : [];
@@ -50,7 +53,10 @@ function ProductsPage() {
         if (categoryValue !== "all") {
             params.category = categoryValue;
         }
-        const key = `${sortValue}|${categoryValue}|${page}`;
+        if (query) {
+            params.q = query;
+        }
+        const key = `${sortValue}|${categoryValue}|${page}|${query}`;
 
         // Bấm chuyển trang liên tục thì bỏ kết quả của request cũ về muộn
         let ignore = false;
@@ -64,7 +70,26 @@ function ProductsPage() {
         return () => {
             ignore = true;
         };
-    }, [sortValue, categoryValue, page]);
+    }, [sortValue, categoryValue, page, query]);
+
+    // Rời trang thì huỷ lượt tìm đang chờ
+    useEffect(() => () => clearTimeout(searchTimer.current), []);
+
+    const applySearch = (value) => {
+        clearTimeout(searchTimer.current);
+        setQuery(value.trim());
+        setPage(1);
+    };
+    // Gõ xong 300ms mới tìm, để không gửi 1 request cho mỗi phím
+    const changeSearch = (value) => {
+        setSearchInput(value);
+        clearTimeout(searchTimer.current);
+        searchTimer.current = setTimeout(() => applySearch(value), 300);
+    };
+    const clearSearch = () => {
+        setSearchInput("");
+        applySearch("");
+    };
 
     // Đổi bộ lọc thì quay về trang 1
     const changeCategory = (value) => {
@@ -163,6 +188,47 @@ function ProductsPage() {
                     })}
                 </div>
 
+                <form
+                    role="search"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        applySearch(searchInput); // Enter thì tìm ngay, không chờ
+                    }}
+                    className="relative mb-8 max-w-md"
+                >
+                    <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#6B6B65]"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                    >
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    <input
+                        type="search"
+                        value={searchInput}
+                        onChange={(e) => changeSearch(e.target.value)}
+                        placeholder="Tìm sản phẩm, vd: chuột logitech"
+                        aria-label="Tìm sản phẩm"
+                        maxLength={100}
+                        className="h-12 w-full rounded-md border border-[#E5E3DC] bg-white pl-12 pr-11 text-[#1A1A18] placeholder:text-[#9A978C] focus:border-[#2F5233] focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+                    />
+                    {searchInput && (
+                        <button
+                            type="button"
+                            onClick={clearSearch}
+                            aria-label="Xoá từ khoá"
+                            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-xl text-[#6B6B65] hover:bg-[#F2F1EC]"
+                        >
+                            ×
+                        </button>
+                    )}
+                </form>
+
                 <div ref={listRef} className="mb-8 flex scroll-mt-24 items-end justify-between gap-4">
                     <div>
                         <h2
@@ -174,6 +240,7 @@ function ProductsPage() {
 
                         <p className="mt-2 text-sm text-[#6B6B65]">
                             {result.total} sản phẩm
+                            {query && <> khớp với “{query}”</>}
                         </p>
                     </div>
 
@@ -188,8 +255,19 @@ function ProductsPage() {
                 {products.length === 0 && !stale ? (
                     <div className="rounded-md border border-[#D9D6CC] bg-white py-16 text-center">
                         <p className="text-[#6B6B65]">
-                            Chưa có sản phẩm nào.
+                            {query
+                                ? `Không tìm thấy sản phẩm nào khớp với “${query}”.`
+                                : "Chưa có sản phẩm nào."}
                         </p>
+                        {query && (
+                            <button
+                                type="button"
+                                onClick={clearSearch}
+                                className="mt-4 text-sm font-medium text-[#2F5233] underline underline-offset-4"
+                            >
+                                Xoá từ khoá
+                            </button>
+                        )}
                     </div>
                 ) : (
                     // Đang tải trang mới thì làm mờ trang cũ thay vì xoá trắng, để bố cục không nhảy

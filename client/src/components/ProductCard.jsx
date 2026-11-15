@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import Price from "./Price";
 
 // Ảnh nhỏ cho ô chọn màu: ảnh Cloudinary thì xin bản thu nhỏ
 function thumbnail(url) {
     return url?.includes("/image/upload/") ? url.replace("/image/upload/", "/image/upload/w_64,h_64,c_pad,b_white/") : url;
 }
 
-const formatVND = (n) => `${Number(n).toLocaleString("vi-VN")}₫`;
 const MAX_CHIPS = 4;
 
 function StockStatus({ stock }) {
@@ -37,6 +37,7 @@ function ProductCard({ product }) {
 
     const image = variant?.image || product.image;
     const price = variant ? variant.price : product.price;
+    const originalPrice = variant ? variant.original_price : product.original_price;
     const stock = variant ? variant.stock : product.stock;
     const detailUrl = `/products/${product.id}`;
     const subtitle = product.short_description;
@@ -139,9 +140,7 @@ function ProductCard({ product }) {
                 </div>
 
                 <div className="mt-auto pt-3">
-                    <p className="text-sm md:text-base font-semibold text-[#2F5233]">
-                        {formatVND(price)}
-                    </p>
+                    <Price price={price} originalPrice={originalPrice} />
 
                     <button
                         type="button"

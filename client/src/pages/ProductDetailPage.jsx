@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { getProductById } from "../api/products";
+import Price from "../components/Price";
 
 // Ảnh nhỏ cho nút chọn phiên bản: ảnh Cloudinary thì xin bản thu nhỏ, ảnh khác giữ nguyên
 function thumbnail(url) {
@@ -143,9 +144,13 @@ function ProductDetailPage() {
                             </p>
                         )}
 
-                        <p className="mb-6 text-2xl font-medium text-[#2F5233]">
-                            {Number(variant ? variant.price : product.price).toLocaleString("vi-VN")}₫
-                        </p>
+                        <div className="mb-6">
+                            <Price
+                                size="lg"
+                                price={variant ? variant.price : product.price}
+                                originalPrice={variant ? variant.original_price : product.original_price}
+                            />
+                        </div>
 
                         {variants.length > 0 && (
                             <div className="mb-6">

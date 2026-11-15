@@ -116,11 +116,11 @@ async function sendOrderConfirmationEmail(order, items) {
         subject: `Xác nhận đơn hàng #${order.id}`,
         html: layout(`
             <h2 style="color: #2F5233">Cảm ơn ${escapeHtml(order.customer_name)} đã đặt hàng!</h2>
-            <p>Đơn hàng <strong>#${order.id}</strong> đã được ghi nhận. Chúng tôi sẽ gọi qua số điện thoại bên dưới để xác nhận trước khi giao.</p>
+            <p>Đơn hàng <strong>#${order.id}</strong> đã được ghi nhận. Chúng tôi sẽ gọi qua số điện thoại bên dưới để xác nhận và báo phí vận chuyển trước khi giao.</p>
             <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 24px 0">
                 ${rows}
                 <tr>
-                    <td colspan="2" style="padding: 12px 0; border-top: 2px solid #2F5233"><strong>Tổng cộng</strong></td>
+                    <td colspan="2" style="padding: 12px 0; border-top: 2px solid #2F5233"><strong>Tiền hàng</strong> <span style="color: #6B6B65">(chưa gồm phí vận chuyển)</span></td>
                     <td style="padding: 12px 0; border-top: 2px solid #2F5233; text-align: right"><strong>${formatVND(order.total)}</strong></td>
                 </tr>
             </table>

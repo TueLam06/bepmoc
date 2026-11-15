@@ -8,6 +8,8 @@ import VariantEditor from "../components/VariantEditor";
 const emptyForm = {
     name: "",
     price: "",
+    original_price: "",
+    sku: "",
     stock: "",
     description: "",
     short_description: "",
@@ -46,6 +48,8 @@ export default function ProductForm() {
                 setForm({
                     name: data.name ?? "",
                     price: data.price ?? "",
+                    original_price: data.original_price ?? "",
+                    sku: data.sku ?? "",
                     stock: data.stock ?? "",
                     description: data.description ?? "",
                     short_description: data.short_description ?? "",
@@ -72,6 +76,9 @@ export default function ProductForm() {
         const payload = {
             name: form.name,
             price: Number(form.price),
+            // Chuỗi rỗng = xoá giá gốc / mã SKU
+            original_price: form.original_price === "" ? "" : Number(form.original_price),
+            sku: form.sku.trim(),
             description: form.description || null,
             short_description: form.short_description.trim() || null,
             image_url: form.image_url || null,
@@ -134,16 +141,41 @@ export default function ProductForm() {
                 </div>
 
                 <div>
-                    <label className={labelClass}>Giá</label>
+                    <label className={labelClass}>Mã SKU (vd CTL756, để trống nếu chưa có)</label>
                     <input
                         className={inputClass}
-                        type="number"
-                        name="price"
-                        value={form.price}
+                        name="sku"
+                        value={form.sku}
                         onChange={handleChange}
-                        required
-                        min="0"
+                        maxLength={50}
                     />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className={labelClass}>Giá bán</label>
+                        <input
+                            className={inputClass}
+                            type="number"
+                            name="price"
+                            value={form.price}
+                            onChange={handleChange}
+                            required
+                            min="0"
+                        />
+                    </div>
+                    <div>
+                        <label className={labelClass}>Giá gốc (gạch ngang)</label>
+                        <input
+                            className={inputClass}
+                            type="number"
+                            name="original_price"
+                            value={form.original_price}
+                            onChange={handleChange}
+                            min="0"
+                            placeholder="Bỏ trống nếu không giảm"
+                        />
+                    </div>
                 </div>
 
                 {!isEdit && (
@@ -169,7 +201,7 @@ export default function ProductForm() {
                         value={form.short_description}
                         onChange={handleChange}
                         maxLength={200}
-                        placeholder="Core i5-1335U · 8GB · 512GB SSD · 15.6 inch FHD"
+                        placeholder="Gỗ trắc · 24 cm"
                     />
                 </div>
 
@@ -183,7 +215,7 @@ export default function ProductForm() {
                         value={form.description}
                         onChange={handleChange}
                         rows={8}
-                        placeholder={"CPU: Intel Core i5-1335U\nRAM: 8GB\nỔ cứng: SSD 512GB NVMe"}
+                        placeholder={"Chất liệu: Gỗ trắc\nChiều dài: 24 cm\nThương hiệu: HAHANCO"}
                     />
                 </div>
 

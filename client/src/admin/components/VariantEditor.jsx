@@ -27,6 +27,33 @@ function ImageField({ value, onChange }) {
 const inputClass =
     "w-full rounded-md border border-[#D9D6CC] bg-white px-3 py-2 text-sm text-[#1A1A18] focus:outline-none focus:border-[#2F5233]";
 
+// Giá gốc (gạch ngang) và mã SKU riêng của phiên bản, cả hai được bỏ trống
+function PricingFields({ form, onChange }) {
+    return (
+        <div className="grid grid-cols-2 gap-2">
+            <input
+                className={inputClass}
+                type="number"
+                min="0"
+                name="original_price"
+                placeholder="Giá gốc (bỏ trống nếu không giảm)"
+                value={form.original_price}
+                onChange={onChange}
+            />
+            <input
+                className={inputClass}
+                name="sku"
+                maxLength={50}
+                placeholder="Mã SKU (vd CTL701TT-10)"
+                value={form.sku}
+                onChange={onChange}
+            />
+        </div>
+    );
+}
+
+const EMPTY_VARIANT = { name: "", price: "", stock: "", image: "", original_price: "", sku: "" };
+
 // Một dòng phiên bản: sửa tên/giá/tồn kho rồi bấm Lưu, hoặc Xoá
 function VariantRow({ productId, variant, token, onSaved, onDeleted, onError }) {
     const [form, setForm] = useState({
@@ -34,6 +61,8 @@ function VariantRow({ productId, variant, token, onSaved, onDeleted, onError }) 
         price: variant.price,
         stock: variant.stock,
         image: variant.image ?? "",
+        original_price: variant.original_price ?? "",
+        sku: variant.sku ?? "",
     });
     const [busy, setBusy] = useState(false);
 
@@ -41,7 +70,9 @@ function VariantRow({ productId, variant, token, onSaved, onDeleted, onError }) 
         form.name !== variant.name ||
         Number(form.price) !== Number(variant.price) ||
         Number(form.stock) !== Number(variant.stock) ||
-        form.image !== (variant.image ?? "");
+        form.image !== (variant.image ?? "") ||
+        String(form.original_price) !== String(variant.original_price ?? "") ||
+        form.sku !== (variant.sku ?? "");
 
     const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -50,8 +81,13 @@ function VariantRow({ productId, variant, token, onSaved, onDeleted, onError }) 
         onError("");
         try {
             const saved = await updateVariant(productId, variant.id, form, token);
-            // Ảnh link ngoài đã được server đổi sang link Cloudinary
-            setForm((prev) => ({ ...prev, image: saved.image ?? "" }));
+            // Ảnh link ngoài đã được server đổi sang link Cloudinary, SKU đã viết hoa
+            setForm((prev) => ({
+                ...prev,
+                image: saved.image ?? "",
+                sku: saved.sku ?? "",
+                original_price: saved.original_price ?? "",
+            }));
             onSaved(saved);
         } catch (err) {
             onError(err.message);
@@ -100,15 +136,16 @@ function VariantRow({ productId, variant, token, onSaved, onDeleted, onError }) 
                     </button>
                 </div>
             </div>
+            <PricingFields form={form} onChange={handleChange} />
             <ImageField value={form.image} onChange={handleChange} />
         </div>
     );
 }
 
-// Quản lý phiên bản của 1 sản phẩm (vd "16GB RAM", "32GB RAM"). Chỉ dùng khi sửa sản phẩm đã tồn tại.
+// Quản lý phiên bản của 1 sản phẩm (vd "1 đôi", "Bộ 10 đôi"). Chỉ dùng khi sửa sản phẩm đã tồn tại.
 export default function VariantEditor({ productId, initialVariants, token }) {
     const [variants, setVariants] = useState(initialVariants);
-    const [newVariant, setNewVariant] = useState({ name: "", price: "", stock: "", image: "" });
+    const [newVariant, setNewVariant] = useState(EMPTY_VARIANT);
     const [adding, setAdding] = useState(false);
     const [error, setError] = useState("");
 
@@ -120,7 +157,7 @@ export default function VariantEditor({ productId, initialVariants, token }) {
         try {
             const created = await createVariant(productId, newVariant, token);
             setVariants((prev) => [...prev, created]);
-            setNewVariant({ name: "", price: "", stock: "", image: "" });
+            setNewVariant(EMPTY_VARIANT);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -147,7 +184,7 @@ export default function VariantEditor({ productId, initialVariants, token }) {
             <div className="flex flex-col gap-2">
                 {variants.length > 0 && (
                     <div className="grid grid-cols-[1fr_110px_80px_auto] gap-2 text-xs text-[#6B6B65]">
-                        <span>Tên (vd 16GB / 512GB, Màu bạc)</span>
+                        <span>Tên (vd 1 đôi, Bộ 10 đôi)</span>
                         <span>Giá</span>
                         <span>Tồn kho</span>
                         <span className="w-[116px]" />
@@ -202,6 +239,7 @@ export default function VariantEditor({ productId, initialVariants, token }) {
                             {adding ? "Đang thêm..." : "+ Thêm"}
                         </button>
                     </div>
+                    <PricingFields form={newVariant} onChange={handleNewChange} />
                     <ImageField value={newVariant.image} onChange={handleNewChange} />
                 </div>
             </div>

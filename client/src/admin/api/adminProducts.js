@@ -26,7 +26,7 @@ export const toggleProductStatus = (id, is_active, token) =>
         token,
     });
 
-// Phiên bản sản phẩm: data = { name, price, stock }
+// Phiên bản sản phẩm: data = { name, price, stock, image?, sku?, original_price? }
 export const createVariant = (productId, data, token) =>
     authFetch(`/api/admin/products/${productId}/variants`, { method: "POST", body: data, token });
 

@@ -123,3 +123,23 @@ describe('đổi mật khẩu', () => {
         expect((await login(user.email, 'matkhaumoi000')).status).toBe(200);
     });
 });
+
+describe('hồ sơ: địa chỉ giao hàng', () => {
+    const updateMe = (token, body) =>
+        request(app).patch('/api/auth/me').set('Authorization', `Bearer ${token}`).send({ name: 'Khách', ...body });
+
+    test('lưu được địa chỉ ở tỉnh ngoài Hà Nội/TP.HCM', async () => {
+        const { token } = await createUser();
+        const res = await updateMe(token, {
+            city: 'Tỉnh Cà Mau', ward: 'Phường An Xuyên', street: '12 Lý Thường Kiệt',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.user).toMatchObject({ city: 'Tỉnh Cà Mau', ward: 'Phường An Xuyên' });
+    });
+
+    test('tỉnh/thành không có trong danh sách 34 tỉnh bị từ chối', async () => {
+        const { token } = await createUser();
+        const res = await updateMe(token, { city: 'Tỉnh Bình Dương', ward: 'Phường 1', street: '12 Hùng Vương' });
+        expect(res.status).toBe(400);
+    });
+});

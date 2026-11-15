@@ -60,11 +60,21 @@ describe('khách vãng lai đặt hàng', () => {
         expect(await getStock(product.id)).toBe(10);
     });
 
-    test('địa chỉ ngoài Hà Nội và TP.HCM bị từ chối', async () => {
+    test('giao toàn quốc: tỉnh/thành nào trong 34 tỉnh cũng được', async () => {
         const product = await createProduct();
         const res = await guestOrder([{ id: product.id, quantity: 1 }], {
             address: '5 Trần Phú, Phường Hải Châu, Thành phố Đà Nẵng',
         });
+        expect(res.status).toBe(201);
+    });
+
+    test.each([
+        '5 Trần Phú, Phường Hải Châu', // thiếu tỉnh/thành
+        '5 Trần Phú, Phường Hải Châu, Quận 1', // không phải tên tỉnh
+        '12 Hùng Vương, Phường 1, Tỉnh Bình Dương', // tỉnh cũ đã sáp nhập
+    ])('địa chỉ %p bị từ chối', async (address) => {
+        const product = await createProduct();
+        const res = await guestOrder([{ id: product.id, quantity: 1 }], { address });
         expect(res.status).toBe(400);
     });
 

@@ -23,7 +23,7 @@ const {
 } = require('../middleware/rateLimit.middleware');
 
 const SALT_ROUNDS = 10;
-const DELIVERY_CITIES = ['Thành phố Hà Nội', 'Thành phố Hồ Chí Minh'];
+const { PROVINCES } = require('../data/provinces');
 
 // Các cột trả về cho client (không có password). phone/city/ward/street dùng để tự điền form đặt hàng
 const USER_COLUMNS = 'id, name, email, role, created_at, phone, city, ward, street';
@@ -313,8 +313,8 @@ router.patch('/me', verifyToken, async (req, res) => {
     if (phone && !/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
         return res.status(400).json({ error: 'Số điện thoại không hợp lệ' });
     }
-    if (city && !DELIVERY_CITIES.includes(city)) {
-        return res.status(400).json({ error: 'Hiện chỉ giao tại Hà Nội và TP.HCM' });
+    if (city && !PROVINCES.includes(city)) {
+        return res.status(400).json({ error: 'Tỉnh/thành phố không hợp lệ' });
     }
     if (ward && ward.length > 100) {
         return res.status(400).json({ error: 'Phường/xã quá dài' });

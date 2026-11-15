@@ -12,7 +12,7 @@ function normalizePhone(phone) {
     return digits.startsWith("84") ? "0" + digits.slice(2) : digits;
 }
 
-const DELIVERY_CITIES = ["Thành phố Hà Nội", "Thành phố Hồ Chí Minh"];
+const { PROVINCES } = require("../data/provinces");
 const MAX_QTY_PER_ITEM = 20;
 
 // POST /api/orders - tạo đơn (khách vãng lai gửi kèm cart, người đã đăng nhập lấy từ giỏ hàng trên server)
@@ -35,8 +35,9 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
     if (!/^0(3|5|7|8|9)\d{8}$/.test(phone)) {
         return res.status(400).json({ message: "Số điện thoại không hợp lệ" });
     }
-    if (address.length > 300 || !DELIVERY_CITIES.some((city) => address.endsWith(`, ${city}`))) {
-        return res.status(400).json({ message: "Địa chỉ không hợp lệ (chỉ giao tại Hà Nội và TP.HCM)" });
+    // Địa chỉ dạng "số nhà, phường/xã, tỉnh/thành": phần cuối phải là 1 trong 34 tỉnh/thành
+    if (address.length > 300 || !PROVINCES.some((city) => address.endsWith(`, ${city}`))) {
+        return res.status(400).json({ message: "Địa chỉ không hợp lệ (thiếu tỉnh/thành phố)" });
     }
 
     const client = await pool.connect();

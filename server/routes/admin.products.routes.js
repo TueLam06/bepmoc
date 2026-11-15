@@ -11,7 +11,7 @@ async function uploadImageUrl(url) {
     if (!url) return null;
     if (url.includes("res.cloudinary.com")) return url;
     const result = await cloudinary.uploader.upload(url, {
-        folder: "ecommerce/products",
+        folder: "bepmoc/products",
     });
     return result.secure_url;
 }

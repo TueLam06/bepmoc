@@ -1,5 +1,0 @@
-{
-  "redirects": [
-    { "source": "/:path*", "destination": "https://stuffcorner.pages.dev/:path*", "permanent": true }
-  ]
-}

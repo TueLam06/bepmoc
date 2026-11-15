@@ -24,7 +24,7 @@ function searchWords(q) {
 const escapeLike = (s) => s.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 
 // Chuỗi dùng để tìm: tên + mô tả ngắn + tên danh mục, bỏ dấu và viết thường
-// để "ban phim" hay "BÀN PHÍM" đều tìm ra "Bàn phím"
+// để "dua go" hay "ĐŨA GỖ" đều tìm ra "Đũa gỗ"
 const SEARCH_TEXT = `unaccent(lower(p.name || ' ' || COALESCE(p.short_description, '') || ' ' || COALESCE(c.name, '')))`;
 
 router.get('/', async (req, res) => {

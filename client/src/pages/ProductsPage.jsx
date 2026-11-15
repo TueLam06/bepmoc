@@ -152,8 +152,8 @@ function ProductsPage() {
                     </h1>
 
                     <p className="mt-4 max-w-xl text-[#D8E2D2] leading-relaxed">
-                        Khám phá các sản phẩm được lựa chọn dành cho không gian
-                        làm việc và cuộc sống hiện đại.
+                        Đũa, muôi thìa, thớt, lược gỗ và sừng HAHANCO, làm từ gỗ tự nhiên
+                        cho bếp và bàn ăn của gia đình.
                     </p>
                 </div>
             </section>
@@ -212,7 +212,7 @@ function ProductsPage() {
                         type="search"
                         value={searchInput}
                         onChange={(e) => changeSearch(e.target.value)}
-                        placeholder="Tìm sản phẩm, vd: chuột logitech"
+                        placeholder="Tìm sản phẩm hoặc mã, vd: đũa gỗ trắc, CTL756"
                         aria-label="Tìm sản phẩm"
                         maxLength={100}
                         className="h-12 w-full rounded-md border border-[#E5E3DC] bg-white pl-12 pr-11 text-[#1A1A18] placeholder:text-[#9A978C] focus:border-[#2F5233] focus:outline-none [&::-webkit-search-cancel-button]:hidden"

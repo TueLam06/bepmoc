@@ -1,7 +1,7 @@
 {
-  "name": "ecommerce-server",
+  "name": "bepmoc-server",
   "version": "1.0.0",
-  "description": "REST API Express + PostgreSQL cho website thương mại điện tử Stuff Corner",
+  "description": "REST API Express + PostgreSQL cho web bán hàng Bếp Mộc Linh Đan (HAHANCO)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

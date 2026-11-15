@@ -152,7 +152,7 @@ function ProductsPage() {
                     </h1>
 
                     <p className="mt-4 max-w-xl text-[#D8E2D2] leading-relaxed">
-                        Đũa, muôi thìa, thớt, lược gỗ và sừng HAHANCO, làm từ gỗ tự nhiên
+                        Đũa, muôi thìa, thớt, lược gỗ và sừng làm từ gỗ tự nhiên,
                         cho bếp và bàn ăn của gia đình.
                     </p>
                 </div>

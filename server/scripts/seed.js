@@ -58,7 +58,7 @@ async function main() {
                                        category_id, feature, is_active)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true) RETURNING id`,
                 [p.name, p.price ?? variants[0][1], p.original ?? null, variants.length ? 0 : STOCK, p.sku, p.short,
-                    `Chất liệu: ${p.short.split(' · ')[0]}\nThương hiệu: HAHANCO\nGhi chú: Sản phẩm mẫu`,
+                    `Chất liệu: ${p.short.split(' · ')[0]}\nGhi chú: Sản phẩm mẫu`,
                     catIds[p.cat], Boolean(p.feature)]
             );
             for (const [i, [name, price, original]] of variants.entries()) {

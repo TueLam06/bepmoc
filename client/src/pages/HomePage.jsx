@@ -51,7 +51,7 @@ function HomePage() {
             {/* GIỚI THIỆU */}
             <section className="max-w-6xl mx-auto px-6 pt-16 pb-12">
                 <Reveal from="up">
-                    <p className="text-sm tracking-wide text-[#6B6B65] mb-3">Đồ gỗ gia dụng HAHANCO</p>
+                    <p className="text-sm tracking-wide text-[#6B6B65] mb-3">Đồ gỗ gia dụng</p>
                     <h1
                         className="max-w-2xl text-4xl md:text-5xl leading-tight text-[#1A1A18]"
                         style={{ fontFamily: "'Fraunces', serif" }}

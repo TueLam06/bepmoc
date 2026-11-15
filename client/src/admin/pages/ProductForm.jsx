@@ -215,7 +215,7 @@ export default function ProductForm() {
                         value={form.description}
                         onChange={handleChange}
                         rows={8}
-                        placeholder={"Chất liệu: Gỗ trắc\nChiều dài: 24 cm\nThương hiệu: HAHANCO"}
+                        placeholder={"Chất liệu: Gỗ trắc\nChiều dài: 24 cm"}
                     />
                 </div>
 

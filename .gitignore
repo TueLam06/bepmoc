@@ -3,6 +3,7 @@ node_modules/
 .vscode/
 
 # Ghi chú cá nhân & cấu hình Claude (không commit)
+CLAUDE.md
 ROADMAP.md
 .claude/
 

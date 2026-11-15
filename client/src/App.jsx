@@ -39,7 +39,7 @@ function App() {
                             path="/*"
                             element={
                                 <div className="min-h-screen flex flex-col">
-                                    <Header title="Stuff Corner" />
+                                    <Header title="Bếp Mộc Linh Đan" />
                                     <main className="flex-1">
                                         <Routes>
                                             <Route path="/" element={<HomePage />} />
@@ -69,7 +69,7 @@ function App() {
                                             />
                                         </Routes>
                                     </main>
-                                    <Footer title="Stuff Corner" />
+                                    <Footer title="Bếp Mộc Linh Đan" />
                                 </div>
                             }
                         />

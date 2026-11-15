@@ -1,0 +1,12 @@
+{
+  "name": "bepmoc",
+  "private": true,
+  "description": "Chạy server và client cùng lúc từ thư mục gốc (server/ và client/ vẫn có package.json riêng)",
+  "scripts": {
+    "dev": "concurrently -k -n server,client -c green,blue \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install"
+  },
+  "devDependencies": {
+    "concurrently": "9.2.1"
+  }
+}

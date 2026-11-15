@@ -170,7 +170,7 @@ function InfoCard() {
                     <fieldset className="space-y-4">
                         <legend className="block text-sm text-[#3A3A36] mb-1.5">
                             Địa chỉ giao hàng
-                            <span className="text-[#B0AC9C]"> (chỉ giao tại Hà Nội và TP.HCM)</span>
+                            <span className="text-[#B0AC9C]"> (dùng để tự điền khi đặt hàng)</span>
                         </legend>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Combobox
@@ -178,7 +178,7 @@ function InfoCard() {
                                 value={form.city}
                                 options={cityOptions}
                                 onChange={(v) => setField("city", v)}
-                                placeholder="Chọn thành phố"
+                                placeholder="Chọn tỉnh/thành phố"
                                 searchable={false}
                             />
                             <Combobox
@@ -186,7 +186,7 @@ function InfoCard() {
                                 value={form.ward}
                                 options={wardOptions}
                                 onChange={(v) => setField("ward", v)}
-                                placeholder={selectedCity ? "Chọn phường/xã" : "Chọn thành phố trước"}
+                                placeholder={selectedCity ? "Chọn phường/xã" : "Chọn tỉnh/thành phố trước"}
                                 searchPlaceholder="Tìm phường/xã, không cần gõ dấu"
                                 disabled={!selectedCity}
                             />

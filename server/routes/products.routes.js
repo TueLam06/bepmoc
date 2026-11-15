@@ -23,9 +23,9 @@ function searchWords(q) {
 // Thoát ký tự đặc biệt của LIKE, để khách gõ "%" hay "_" thì tìm đúng ký tự đó
 const escapeLike = (s) => s.replace(/[\\%_]/g, (ch) => `\\${ch}`);
 
-// Chuỗi dùng để tìm: tên + mô tả ngắn + tên danh mục, bỏ dấu và viết thường
+// Chuỗi dùng để tìm: tên + mô tả ngắn + tên danh mục + mã SKU, bỏ dấu và viết thường
 // để "dua go" hay "ĐŨA GỖ" đều tìm ra "Đũa gỗ"
-const SEARCH_TEXT = `unaccent(lower(p.name || ' ' || COALESCE(p.short_description, '') || ' ' || COALESCE(c.name, '')))`;
+const SEARCH_TEXT = `unaccent(lower(p.name || ' ' || COALESCE(p.short_description, '') || ' ' || COALESCE(c.name, '') || ' ' || COALESCE(p.sku, '')))`;
 
 router.get('/', async (req, res) => {
     const allowedSort = {
@@ -81,7 +81,8 @@ router.get('/', async (req, res) => {
              LEFT JOIN categories c ON c.id = p.category_id
              LEFT JOIN (
                  SELECT product_id, MIN(price) AS min_price, COUNT(*) AS variant_count,
-                        json_agg(json_build_object('id', id, 'name', name, 'price', price, 'stock', stock, 'image', image)
+                        json_agg(json_build_object('id', id, 'name', name, 'price', price, 'stock', stock, 'image', image,
+                                           'sku', sku, 'original_price', original_price)
                                  ORDER BY sort_order, id) AS variants
                  FROM product_variants
                  GROUP BY product_id
@@ -127,7 +128,7 @@ router.get('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
         }
         const variants = await pool.query(
-            `SELECT id, name, price, stock, image FROM product_variants
+            `SELECT id, name, price, stock, image, sku, original_price FROM product_variants
              WHERE product_id = $1 ORDER BY sort_order, id`,
             [id]
         );

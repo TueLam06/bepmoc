@@ -135,7 +135,7 @@ function ProductCard({ product }) {
                                 strokeLinejoin="round"
                             />
                         </svg>
-                        <span>Giao tại Hà Nội, TP.HCM</span>
+                        <span>Giao toàn quốc từ Hà Nội</span>
                     </p>
                 </div>
 

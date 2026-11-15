@@ -26,7 +26,7 @@ export default function AdminLayout() {
                     className="text-xl text-[#1A1A18]"
                     style={{ fontFamily: "'Fraunces', serif" }}
                 >
-                    Stuff Corner - Admin
+                    Bếp Mộc Linh Đan · Quản trị
                 </Link>
 
                 <div className="flex items-center gap-6">

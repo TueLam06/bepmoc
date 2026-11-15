@@ -125,8 +125,8 @@ function ChatPage() {
                                     </h2>
 
                                     <p className="mt-2 text-sm text-[#6B6B65]">
-                                        Ví dụ: "Tìm cho tôi một chiếc laptop
-                                        dưới 20 triệu đồng"
+                                        Ví dụ: "Tư vấn giúp mình bộ đũa gỗ
+                                        làm quà tặng dưới 200 nghìn"
                                     </p>
                                 </div>
                             </div>

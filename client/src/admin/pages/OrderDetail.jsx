@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getOrderById, updateOrderStatus } from "../api/adminOrders";
+import {
+    getOrderById,
+    updateOrderStatus,
+    updateShippingFee,
+    updateTrackingCode,
+    exportOrderDocument,
+} from "../api/adminOrders";
+import { orderDocCode } from "../../utils/orderCode";
 import { imageUrl } from "../../utils/image";
+import { codAmount, VIETTELPOST_TRACKING_URL } from "../../constants/shipping";
 
 const STATUS_LABELS = {
     pending: "Chờ xác nhận",
@@ -32,6 +40,10 @@ export default function OrderDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
+    // Ô nhập phí ship và mã vận đơn, điền sẵn giá trị đang lưu khi tải đơn
+    const [feeInput, setFeeInput] = useState("");
+    const [codeInput, setCodeInput] = useState("");
+    const [exporting, setExporting] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -39,6 +51,8 @@ export default function OrderDetail() {
             try {
                 const data = await getOrderById(id, token);
                 setOrder(data);
+                setFeeInput(data.shipping_fee === null ? "" : String(Number(data.shipping_fee)));
+                setCodeInput(data.tracking_code || "");
             } catch (err) {
                 setError(err.message || "Lỗi tải chi tiết đơn hàng");
             } finally {
@@ -72,6 +86,63 @@ export default function OrderDetail() {
         }
     };
 
+    const handleSaveFee = async (e) => {
+        e.preventDefault();
+        const raw = feeInput.replace(/[.,\s]/g, "");
+        const fee = raw === "" ? null : Number(raw);
+        if (fee !== null && !Number.isInteger(fee)) {
+            alert("Phí ship phải là số, VD 30000");
+            return;
+        }
+        setSaving(true);
+        try {
+            const updated = await updateShippingFee(id, fee, token);
+            setOrder((prev) => ({ ...prev, ...updated }));
+            setFeeInput(updated.shipping_fee === null ? "" : String(Number(updated.shipping_fee)));
+        } catch (err) {
+            alert(err.message || "Lỗi cập nhật phí ship");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSaveCode = async (e) => {
+        e.preventDefault();
+        if (
+            order.status === "confirmed" &&
+            !window.confirm(`Lưu mã vận đơn, chuyển đơn #${id} sang "Đang giao" và gửi mail báo khách?`)
+        ) {
+            return;
+        }
+        setSaving(true);
+        try {
+            const updated = await updateTrackingCode(id, codeInput, token);
+            setOrder((prev) => ({ ...prev, ...updated }));
+            setCodeInput(updated.tracking_code);
+        } catch (err) {
+            alert(err.message || "Lỗi cập nhật mã vận đơn");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleExport = async () => {
+        setExporting(true);
+        try {
+            const blob = await exportOrderDocument(id, token);
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${orderDocCode(order)}.xlsx`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            alert(err.message || "Lỗi xuất phiếu đơn hàng");
+        } finally {
+            setExporting(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center py-16">
@@ -99,12 +170,22 @@ export default function OrderDetail() {
                 ← Quay lại
             </button>
 
-            <h2
-                className="text-2xl text-[#1A1A18] mb-6"
-                style={{ fontFamily: "'Fraunces', serif" }}
-            >
-                Đơn hàng #{order.id}
-            </h2>
+            <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+                <div>
+                    <h2 className="text-2xl text-[#1A1A18]" style={{ fontFamily: "'Fraunces', serif" }}>
+                        Đơn hàng #{order.id}
+                    </h2>
+                    <p className="text-sm text-[#6B6B65] mt-1">Số phiếu: {orderDocCode(order)}</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleExport}
+                    disabled={exporting}
+                    className="rounded-md border border-[#2F5233] px-4 py-2 text-sm text-[#2F5233] hover:bg-[#2F5233]/[0.06] disabled:opacity-50"
+                >
+                    {exporting ? "Đang xuất..." : "Xuất phiếu Excel"}
+                </button>
+            </div>
 
             <div className="rounded-md border border-[#E5E3DC] bg-white p-6 mb-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -127,7 +208,7 @@ export default function OrderDetail() {
                         <p className="text-[#1A1A18] font-medium">{order.address}</p>
                     </div>
                     <div>
-                        <p className="text-[#6B6B65] mb-1">Tổng tiền</p>
+                        <p className="text-[#6B6B65] mb-1">Tiền hàng</p>
                         <p className="text-[#1A1A18] font-medium">
                             {Number(order.total).toLocaleString("vi-VN")}đ
                         </p>
@@ -163,6 +244,97 @@ export default function OrderDetail() {
                             </select>
                         )}
                     </div>
+                </div>
+            </div>
+
+            <div className="rounded-md border border-[#E5E3DC] bg-white p-6 mb-6">
+                <h3 className="text-lg text-[#1A1A18] mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
+                    Giao hàng (COD qua ViettelPost)
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+                    <form onSubmit={handleSaveFee}>
+                        <label htmlFor="shipping-fee" className="block text-[#6B6B65] mb-1">
+                            Phí ship (đ)
+                        </label>
+                        {["pending", "confirmed"].includes(order.status) ? (
+                            <div className="flex gap-2">
+                                <input
+                                    id="shipping-fee"
+                                    inputMode="numeric"
+                                    value={feeInput}
+                                    onChange={(e) => setFeeInput(e.target.value)}
+                                    placeholder="VD 30000, 0 = miễn phí"
+                                    className="flex-1 min-w-0 rounded-md border border-[#D9D6CC] px-3 py-2 text-[#1A1A18]"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="rounded-md bg-[#2F5233] px-4 py-2 text-[#F5F3EE] disabled:opacity-50"
+                                >
+                                    Lưu
+                                </button>
+                            </div>
+                        ) : (
+                            <p className="text-[#1A1A18] font-medium">
+                                {order.shipping_fee === null
+                                    ? "Chưa báo"
+                                    : `${Number(order.shipping_fee).toLocaleString("vi-VN")}đ`}
+                            </p>
+                        )}
+                    </form>
+
+                    <div>
+                        <p className="text-[#6B6B65] mb-1">Tiền thu hộ (hàng + ship)</p>
+                        <p className="text-[#1A1A18] font-medium text-base">
+                            {codAmount(order) === null
+                                ? "Chưa có phí ship"
+                                : `${codAmount(order).toLocaleString("vi-VN")}đ`}
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleSaveCode} className="sm:col-span-2">
+                        <label htmlFor="tracking-code" className="block text-[#6B6B65] mb-1">
+                            Mã vận đơn ViettelPost
+                        </label>
+                        {["confirmed", "shipping"].includes(order.status) && order.shipping_fee !== null ? (
+                            <div className="flex gap-2">
+                                <input
+                                    id="tracking-code"
+                                    value={codeInput}
+                                    onChange={(e) => setCodeInput(e.target.value)}
+                                    placeholder="Mã ViettelPost trả về sau khi tạo đơn"
+                                    className="flex-1 min-w-0 rounded-md border border-[#D9D6CC] px-3 py-2 text-[#1A1A18] uppercase"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={saving || !codeInput.trim()}
+                                    className="rounded-md bg-[#2F5233] px-4 py-2 text-[#F5F3EE] disabled:opacity-50"
+                                >
+                                    {order.status === "confirmed" ? "Lưu và giao" : "Lưu"}
+                                </button>
+                            </div>
+                        ) : order.tracking_code ? (
+                            <p className="text-[#1A1A18] font-medium">{order.tracking_code}</p>
+                        ) : (
+                            <p className="text-[#6B6B65]">
+                                {order.status === "pending"
+                                    ? "Xác nhận đơn và nhập phí ship trước."
+                                    : order.shipping_fee === null && order.status === "confirmed"
+                                      ? "Nhập phí ship trước."
+                                      : "Không có."}
+                            </p>
+                        )}
+                        {order.tracking_code && (
+                            <a
+                                href={VIETTELPOST_TRACKING_URL}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-block mt-2 text-[#2F5233] underline"
+                            >
+                                Tra cứu hành trình trên ViettelPost
+                            </a>
+                        )}
+                    </form>
                 </div>
             </div>
 

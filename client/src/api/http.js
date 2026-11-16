@@ -30,4 +30,18 @@ export async function authFetch(path, { method = 'GET', body, token } = {}) {
     return handleResponse(res);
 }
 
+// Tải file (VD phiếu Excel): trả về Blob, lỗi thì server vẫn trả JSON { error } như các API khác
+export async function authFetchBlob(path, { token } = {}) {
+    let res;
+    try {
+        res = await fetch(`${API_BASE}${path}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+    } catch {
+        throw new Error('Lỗi kết nối, thử lại sau');
+    }
+    if (!res.ok) return handleResponse(res);
+    return res.blob();
+}
+
 export { API_BASE, handleResponse };

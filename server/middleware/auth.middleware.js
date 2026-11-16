@@ -1,4 +1,5 @@
 const { verifyTokenString } = require('../utils/token');
+const pool = require('../config/db');
 
 // Middleware bắt buộc phải đăng nhập mới được đi tiếp
 function verifyToken(req, res, next) {
@@ -23,11 +24,23 @@ function verifyToken(req, res, next) {
 }
 
 // Middleware chỉ cho phép admin đi tiếp (dùng sau verifyToken)
-function requireAdmin(req, res, next) {
-    if (!req.user || req.user.role !== 'admin') {
+// Đọc role từ DB chứ không tin role trong token: đổi quyền xong có hiệu lực ngay, không phải đăng nhập lại
+async function requireAdmin(req, res, next) {
+    if (!req.user) {
         return res.status(403).json({ error: 'Chỉ admin mới được phép thực hiện hành động này' });
     }
-    next();
+    try {
+        const result = await pool.query('SELECT role FROM users WHERE id = $1', [req.user.id]);
+        const role = result.rows[0]?.role;
+        if (role !== 'admin') {
+            return res.status(403).json({ error: 'Chỉ admin mới được phép thực hiện hành động này' });
+        }
+        req.user.role = role;
+        next();
+    } catch (err) {
+        console.error('Lỗi kiểm tra quyền admin:', err);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
 }
 
 // Middleware "tuỳ chọn": nếu có token thì gắn req.user, không có cũng không lỗi

@@ -23,6 +23,18 @@ describe('route admin', () => {
         }
     );
 
+    test('quyền admin theo DB, không theo role ghi trong token', async () => {
+        const pool = require('../config/db');
+        const promoted = await createUser();
+        const demoted = await createUser({ role: 'admin' });
+        await pool.query("UPDATE users SET role = 'admin' WHERE id = $1", [promoted.user.id]);
+        await pool.query("UPDATE users SET role = 'customer' WHERE id = $1", [demoted.user.id]);
+
+        // Token ký trước khi đổi quyền vẫn dùng tiếp, quyền mới có hiệu lực ngay
+        expect((await get('/api/admin/stats', promoted.token)).status).toBe(200);
+        expect((await get('/api/admin/stats', demoted.token)).status).toBe(403);
+    });
+
     test('danh sách user không lộ mật khẩu', async () => {
         const admin = await createUser({ role: 'admin' });
         const res = await get('/api/users', admin.token);

@@ -1,4 +1,5 @@
 import ProductCard from "../components/ProductCard";
+import HeroBanner from "../components/HeroBanner";
 import Reveal from "../components/Reveal";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -48,28 +49,8 @@ function HomePage() {
     return (
         <div className="min-h-screen bg-[#FAFAF8]">
 
-            {/* GIỚI THIỆU */}
-            <section className="max-w-6xl mx-auto px-6 pt-16 pb-12">
-                <Reveal from="up">
-                    <p className="text-sm tracking-wide text-[#6B6B65] mb-3">Đồ gỗ gia dụng</p>
-                    <h1
-                        className="max-w-2xl text-4xl md:text-5xl leading-tight text-[#1A1A18]"
-                        style={{ fontFamily: "'Fraunces', serif" }}
-                    >
-                        Đồ gỗ tự nhiên cho căn bếp và bàn ăn.
-                    </h1>
-                    <p className="mt-4 max-w-xl text-[#6B6B65]">
-                        Đũa, muôi, thớt, lược gỗ và sừng làm thủ công, kho tại Hà Nội.
-                    </p>
-                    <Link
-                        to="/products"
-                        className="mt-8 inline-flex items-center gap-2 rounded-md bg-[#2F5233] px-5 py-2.5 font-medium text-[#F5F3EE] hover:bg-[#1E3A22] transition-colors"
-                    >
-                        Xem sản phẩm
-                        <span aria-hidden="true">→</span>
-                    </Link>
-                </Reveal>
-            </section>
+            {/* GIỚI THIỆU: banner video */}
+            <HeroBanner />
 
 
             {/* NỔI BẬT */}

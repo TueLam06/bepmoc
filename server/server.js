@@ -59,6 +59,12 @@ pool.query(`
 
     -- Thứ tự danh mục theo cách shop sắp
     ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+
+    -- Giao COD qua ViettelPost: phí ship shop báo khi xác nhận (NULL = chưa báo) và mã vận đơn
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_fee NUMERIC(12, 2) CHECK (shipping_fee >= 0);
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code VARCHAR(30);
+    CREATE UNIQUE INDEX IF NOT EXISTS orders_tracking_code_key ON orders (tracking_code);
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMP;
 `)
     .then(() => {
         app.listen(PORT, () => {

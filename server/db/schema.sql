@@ -88,7 +88,12 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id INTEGER REFERENCES users(id),
     status VARCHAR(30) NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending', 'confirmed', 'shipping', 'completed', 'cancelled')),
-    email VARCHAR(255)
+    email VARCHAR(255),
+    -- Phí ship shop báo khi xác nhận đơn (NULL = chưa báo), tiền thu hộ COD = total + shipping_fee
+    shipping_fee NUMERIC(12, 2) CHECK (shipping_fee >= 0),
+    -- Mã vận đơn ViettelPost, nhập mã thì đơn chuyển sang đang giao
+    tracking_code VARCHAR(30) UNIQUE,
+    shipped_at TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);

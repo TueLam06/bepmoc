@@ -19,7 +19,7 @@ function Cart({cart, total, onIncrease, onDecrease, onRemove,}) {
                         fontFamily: "'Fraunces', serif",
                     }}
                 >
-                    Shopping Cart
+                    Giỏ hàng
                 </h1>
 
                 <p className="mt-2 text-sm text-[#6B6B65]">

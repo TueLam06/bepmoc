@@ -37,7 +37,7 @@ export default function RegisterPage() {
         <div className="min-h-screen flex flex-col md:flex-row bg-[#FAFAF8]">
             <div className="bg-[#2F5233] text-[#F5F3EE] px-8 py-10 md:py-0 md:w-1/2 flex items-center">
                 <div className="max-w-sm mx-auto md:mx-0 md:ml-auto md:mr-16">
-                    <p className="text-sm tracking-wide text-[#B7C9AF] mb-3">Cửa hàng của bạn</p>
+                    <p className="text-sm tracking-wide text-[#B7C9AF] mb-3">Bếp Mộc Linh Đan</p>
                     <h1
                         className="text-3xl md:text-5xl leading-tight mb-4"
                         style={{ fontFamily: "'Fraunces', serif" }}

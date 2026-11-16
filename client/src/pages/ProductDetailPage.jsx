@@ -99,7 +99,7 @@ function ProductDetailPage() {
                         to="/products"
                         className="hover:text-[#2F5233]"
                     >
-                        Products
+                        Sản phẩm
                     </Link>
 
                     <span className="mx-2">/</span>

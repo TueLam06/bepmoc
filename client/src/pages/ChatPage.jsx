@@ -91,7 +91,7 @@ function ChatPage() {
             <section className="bg-[#2F5233]">
                 <div className="max-w-4xl mx-auto px-6 py-12 md:py-16">
                     <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-[#D8E2D2]">
-                        AI Assistant
+                        Trợ lý Bếp Mộc
                     </p>
 
                     <h1
@@ -160,7 +160,7 @@ function ChatPage() {
                                         >
                                             {msg.sender === "user"
                                                 ? "Bạn"
-                                                : "AI Assistant"}
+                                                : "Trợ lý Bếp Mộc"}
                                         </p>
 
                                         {/* Message */}
@@ -227,7 +227,7 @@ function ChatPage() {
                                 <div className="flex justify-start">
                                     <div>
                                         <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-[#2F5233]">
-                                            AI Assistant
+                                            Trợ lý Bếp Mộc
                                         </p>
 
                                         <div className="rounded-lg border border-[#D9D6CC] bg-[#FAFAF8] px-4 py-3">

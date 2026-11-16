@@ -9,6 +9,11 @@ app.set('trust proxy', 1);
 
 app.use(cors());
 app.use(express.json({ limit: '100kb' }));
+
+// Cho dịch vụ ping (UptimeRobot) gọi định kỳ để Render gói Free không ngủ.
+// Không truy vấn DB để Neon vẫn được tạm dừng khi rảnh, không tốn giờ compute; đặt trước limiter
+app.get('/api/health', (req, res) => res.json({ ok: true }));
+
 app.use('/api', apiLimiter);
 
 const productRoutes = require('./routes/products.routes');

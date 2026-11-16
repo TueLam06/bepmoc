@@ -33,7 +33,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TueLam06/ecommerce-project.git",
+    "url": "git+https://github.com/TueLam06/bepmoc.git",
     "directory": "server"
   },
   "devDependencies": {

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { STATUS_LABELS } from "../constants/orderStatus";
 import { imageUrl } from "../utils/image";
+import { codAmount, VIETTELPOST_TRACKING_URL } from "../constants/shipping";
 
 const fraunces = { fontFamily: "'Fraunces', serif" };
 
@@ -77,6 +78,20 @@ function OrderDetailView({ order }) {
                             {order.created_at ? new Date(order.created_at).toLocaleString("vi-VN") : ""}
                         </p>
                     </div>
+                    {order.tracking_code && (
+                        <div>
+                            <p className="text-[#6B6F63] mb-1">Mã vận đơn ViettelPost</p>
+                            <p className="text-[#1F2420] font-medium">{order.tracking_code}</p>
+                            <a
+                                href={VIETTELPOST_TRACKING_URL}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[#2F5233] underline"
+                            >
+                                Tra cứu hành trình
+                            </a>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -126,11 +141,25 @@ function OrderDetailView({ order }) {
                         );
                     })}
                 </div>
-                <div className="flex items-baseline justify-between px-6 py-4 border-t border-[#EFEDE6] bg-[#FAFAF8]">
-                    <span className="text-sm text-[#6B6F63]">Tổng cộng</span>
-                    <span style={fraunces} className="text-2xl text-[#1F2420]">
-                        {formatVND(order.total)}
-                    </span>
+                <div className="px-6 py-4 border-t border-[#EFEDE6] bg-[#FAFAF8] space-y-1.5 text-sm">
+                    <div className="flex justify-between text-[#6B6F63]">
+                        <span>Tiền hàng</span>
+                        <span className="text-[#1F2420]">{formatVND(order.total)}</span>
+                    </div>
+                    <div className="flex justify-between text-[#6B6F63]">
+                        <span>Phí vận chuyển</span>
+                        <span className="text-[#1F2420]">
+                            {order.shipping_fee === null || order.shipping_fee === undefined
+                                ? "Shop báo khi xác nhận đơn"
+                                : formatVND(order.shipping_fee)}
+                        </span>
+                    </div>
+                    <div className="flex items-baseline justify-between pt-1.5">
+                        <span className="text-[#6B6F63]">Thanh toán khi nhận hàng</span>
+                        <span style={fraunces} className="text-2xl text-[#1F2420]">
+                            {formatVND(codAmount(order) ?? order.total)}
+                        </span>
+                    </div>
                 </div>
             </div>
         </>

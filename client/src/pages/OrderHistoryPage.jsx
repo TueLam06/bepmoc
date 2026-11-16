@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { getMyOrders, cancelMyOrder } from "../api/orders";
 import { STATUS_LABELS, STATUS_BADGE } from "../constants/orderStatus";
 import { imageUrl } from "../utils/image";
+import { codAmount } from "../constants/shipping";
 
 const fraunces = { fontFamily: "'Fraunces', serif" };
 const inter = { fontFamily: "'Inter', sans-serif" };
@@ -165,9 +166,9 @@ function OrderHistoryPage() {
                                     )}
                                 </div>
                                 <div className="text-sm text-[#6B6F63]">
-                                    Tổng tiền:{" "}
+                                    {order.shipping_fee === null ? "Tiền hàng (chưa gồm ship): " : "Tổng thanh toán: "}
                                     <span style={fraunces} className="text-xl text-[#1F2420]">
-                                        {formatVND(order.total)}
+                                        {formatVND(codAmount(order) ?? order.total)}
                                     </span>
                                 </div>
                             </div>

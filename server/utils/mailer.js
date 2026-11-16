@@ -132,4 +132,68 @@ async function sendOrderConfirmationEmail(order, items) {
     });
 }
 
-module.exports = { sendMail, sendVerificationEmail, sendPasswordResetEmail, sendOrderConfirmationEmail };
+// Trang tra cứu của ViettelPost có captcha nên không gắn sẵn mã vào link được, khách tự dán mã
+const VIETTELPOST_TRACKING_URL = 'https://viettelpost.com.vn/tra-cuu-hanh-trinh-don/';
+
+// Báo phí ship sau khi shop xác nhận đơn. order: 1 dòng bảng orders (đã có shipping_fee)
+async function sendShippingFeeEmail(order) {
+    const link = clientUrl(order.user_id ? `/orders/${order.id}` : '/track-order');
+    const fee = Number(order.shipping_fee);
+    const codAmount = Number(order.total) + fee;
+    const row = (label, value, bold = false) => `
+        <tr>
+            <td style="padding: 6px 0; color: #6B6B65">${label}</td>
+            <td style="padding: 6px 0; text-align: right">${bold ? `<strong>${value}</strong>` : value}</td>
+        </tr>
+    `;
+
+    await sendMail({
+        to: order.email,
+        subject: `Phí vận chuyển đơn hàng #${order.id}`,
+        html: layout(`
+            <h2 style="color: #2F5233">Chào ${escapeHtml(order.customer_name)},</h2>
+            <p>Shop đã xác nhận đơn hàng <strong>#${order.id}</strong>. Phí vận chuyển và số tiền thanh toán khi nhận hàng như sau:</p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0">
+                ${row('Tiền hàng', formatVND(order.total))}
+                ${row('Phí vận chuyển', fee === 0 ? 'Miễn phí' : formatVND(fee))}
+                ${row('Thanh toán khi nhận hàng', formatVND(codAmount), true)}
+            </table>
+            <p style="font-size: 14px">Shop sẽ gửi mã vận đơn khi giao hàng cho đơn vị vận chuyển.</p>
+            ${buttonBlock(link, 'Xem đơn hàng')}
+        `),
+    });
+}
+
+// order: 1 dòng bảng orders (đã có tracking_code và shipping_fee)
+async function sendOrderShippedEmail(order) {
+    const link = clientUrl(order.user_id ? `/orders/${order.id}` : '/track-order');
+    const codAmount = Number(order.total) + Number(order.shipping_fee || 0);
+
+    await sendMail({
+        to: order.email,
+        subject: `Đơn hàng #${order.id} đang được giao`,
+        html: layout(`
+            <h2 style="color: #2F5233">Chào ${escapeHtml(order.customer_name)},</h2>
+            <p>Đơn hàng <strong>#${order.id}</strong> đã được giao cho ViettelPost.</p>
+            <p style="font-size: 14px; margin: 4px 0"><span style="color: #6B6B65">Mã vận đơn:</span> <strong>${escapeHtml(order.tracking_code)}</strong></p>
+            <p style="font-size: 14px; margin: 4px 0">
+                <span style="color: #6B6B65">Số tiền thanh toán khi nhận hàng:</span> <strong>${formatVND(codAmount)}</strong>
+                <span style="color: #6B6B65">(tiền hàng ${formatVND(order.total)} + phí vận chuyển ${formatVND(order.shipping_fee || 0)})</span>
+            </p>
+            <p style="font-size: 14px">
+                Theo dõi hành trình bằng mã vận đơn trên trang
+                <a href="${VIETTELPOST_TRACKING_URL}" style="color: #2F5233">tra cứu của ViettelPost</a>.
+            </p>
+            ${buttonBlock(link, 'Xem đơn hàng')}
+        `),
+    });
+}
+
+module.exports = {
+    sendMail,
+    sendVerificationEmail,
+    sendPasswordResetEmail,
+    sendOrderConfirmationEmail,
+    sendShippingFeeEmail,
+    sendOrderShippedEmail,
+};

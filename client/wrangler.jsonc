@@ -1,0 +1,10 @@
+{
+  // Deploy client lên Cloudflare Workers dạng static assets (không có code Worker)
+  "name": "bepmoc",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    // SPA: đường dẫn không có file thì trả index.html để React Router xử lý
+    "not_found_handling": "single-page-application"
+  }
+}

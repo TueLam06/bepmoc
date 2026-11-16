@@ -13,12 +13,17 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [unverifiedEmail, setUnverifiedEmail] = useState('');
+    const [notFound, setNotFound] = useState(false);
+    // Cảnh báo dưới ô mật khẩu khi còn ít lượt (null = chưa cần báo)
+    const [passwordWarning, setPasswordWarning] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError('');
         setUnverifiedEmail('');
+        setNotFound(false);
+        setPasswordWarning(null);
         setSubmitting(true);
         try {
             const user = await login(email, password);
@@ -36,6 +41,18 @@ export default function LoginPage() {
         } catch (err) {
             setError(err.message);
             if (err.code === 'EMAIL_NOT_VERIFIED') setUnverifiedEmail(email);
+            if (err.code === 'EMAIL_NOT_FOUND') setNotFound(true);
+            if (err.code === 'WRONG_PASSWORD' && err.attemptsLeft != null && err.attemptsLeft <= 3) {
+                setPasswordWarning(
+                    err.attemptsLeft > 0
+                        ? `Bạn còn ${err.attemptsLeft} lần thử, sai tiếp sẽ bị khoá đăng nhập 15 phút.`
+                        : 'Bạn đã hết lượt thử, vui lòng đợi 15 phút hoặc đặt lại mật khẩu.'
+                );
+            }
+            if (err.status === 429) {
+                // Lỗi chung đã ghi "thử lại sau 15 phút", ở đây chỉ gợi ý cách không phải chờ
+                setPasswordWarning('Không muốn chờ? Bạn có thể đặt lại mật khẩu ngay.');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -46,7 +63,7 @@ export default function LoginPage() {
             {/* Panel thương hiệu — cột hẹp bên trái, thu gọn thành header trên mobile */}
             <aside className="bg-[#2F5233] text-[#F5F3EE] px-6 py-8 md:px-10 md:py-0 md:w-[36%] lg:w-[30%] md:max-w-md flex items-center">
                 <div className="max-w-xs mx-auto">
-                    <p className="text-xs uppercase tracking-widest text-[#B7C9AF] mb-3">Cửa hàng của bạn</p>
+                    <p className="text-xs uppercase tracking-widest text-[#B7C9AF] mb-3">Bếp Mộc Linh Đan</p>
                     <h1
                         className="text-2xl md:text-3xl lg:text-4xl leading-tight mb-3"
                         style={{ fontFamily: "'Fraunces', serif" }}
@@ -103,14 +120,36 @@ export default function LoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full rounded-md border border-[#D9D6CC] bg-white px-3.5 py-2.5 text-[#1A1A18] focus:outline-none focus:ring-2 focus:ring-[#2F5233] focus:border-transparent"
+                                aria-invalid={passwordWarning ? true : undefined}
+                                aria-describedby={passwordWarning ? 'password-warning' : undefined}
+                                className={`w-full rounded-md border bg-white px-3.5 py-2.5 text-[#1A1A18] focus:outline-none focus:ring-2 focus:border-transparent ${
+                                    passwordWarning
+                                        ? 'border-[#B3413B] focus:ring-[#B3413B]'
+                                        : 'border-[#D9D6CC] focus:ring-[#2F5233]'
+                                }`}
                                 placeholder="••••••••"
                             />
+                            {passwordWarning && (
+                                <p id="password-warning" className="mt-1.5 text-sm text-[#B3413B]">
+                                    {passwordWarning}{' '}
+                                    <Link to="/forgot-password" className="underline underline-offset-2">
+                                        Quên mật khẩu?
+                                    </Link>
+                                </p>
+                            )}
                         </div>
 
                         {error && (
                             <p className="text-sm text-[#B3413B]" role="alert">
                                 {error}
+                                {notFound && (
+                                    <>
+                                        {'. '}
+                                        <Link to="/register" className="text-[#2F5233] underline underline-offset-2">
+                                            Tạo tài khoản mới
+                                        </Link>
+                                    </>
+                                )}
                             </p>
                         )}
 

@@ -12,7 +12,9 @@ test('đăng nhập sai 5 lần thì lần thứ 6 bị chặn, kể cả khi nh
         request(app).post('/api/auth/login').set('X-Forwarded-For', ip).send({ email: user.email, password });
 
     for (let i = 0; i < 5; i++) {
-        expect((await login('saimatkhau')).status).toBe(401);
+        const res = await login('saimatkhau');
+        expect(res.status).toBe(401);
+        expect(res.body.attemptsLeft).toBe(4 - i);
     }
     expect((await login('saimatkhau')).status).toBe(429);
     expect((await login(PASSWORD)).status).toBe(429);

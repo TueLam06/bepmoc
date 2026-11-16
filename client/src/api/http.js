@@ -6,6 +6,8 @@ async function handleResponse(res) {
     if (!res.ok) {
         const err = new Error(data.error || data.message || 'Có lỗi xảy ra, vui lòng thử lại');
         err.code = data.code; // vd: EMAIL_NOT_VERIFIED
+        err.status = res.status;
+        err.attemptsLeft = data.attemptsLeft; // đăng nhập sai: số lượt còn lại trước khi bị chặn
         throw err;
     }
     return data;

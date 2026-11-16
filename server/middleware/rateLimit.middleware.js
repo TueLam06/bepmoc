@@ -24,6 +24,8 @@ const loginLimiter = createLimiter({
     windowMs: 15 * 60_000,
     limit: 5,
     skipSuccessfulRequests: true,
+    // Tên riêng để route đọc số lượt còn lại của limiter này, không lẫn với limiter khác
+    requestPropertyName: 'loginRateLimit',
     keyGenerator: (req) =>
         `${ipKeyGenerator(req.ip)}:${String(req.body?.email || '').trim().toLowerCase()}`,
     message: 'Bạn đăng nhập sai quá nhiều lần, vui lòng thử lại sau 15 phút',

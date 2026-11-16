@@ -217,6 +217,7 @@ router.get("/my", verifyToken, async (req, res) => {
     try {
         const result = await pool.query(
             `SELECT o.id, o.customer_name, o.phone, o.address, o.total, o.status, o.created_at,
+                    o.shipping_fee, o.tracking_code,
                     COALESCE(
                         json_agg(
                             json_build_object(

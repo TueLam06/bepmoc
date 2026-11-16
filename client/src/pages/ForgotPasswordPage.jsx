@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
             const data = await forgotPasswordRequest(email.trim());
             setStatus({ ok: true, text: data.message });
         } catch (err) {
-            setStatus({ ok: false, text: err.message });
+            setStatus({ ok: false, text: err.message, notFound: err.code === 'EMAIL_NOT_FOUND' });
         } finally {
             setSending(false);
         }
@@ -52,7 +52,17 @@ export default function ForgotPasswordPage() {
                         </div>
 
                         {status && (
-                            <p className="text-sm text-[#B3413B]" role="alert">{status.text}</p>
+                            <p className="text-sm text-[#B3413B]" role="alert">
+                                {status.text}
+                                {status.notFound && (
+                                    <>
+                                        {'. '}
+                                        <Link to="/register" className="text-[#2F5233] underline underline-offset-2">
+                                            Tạo tài khoản mới
+                                        </Link>
+                                    </>
+                                )}
+                            </p>
                         )}
 
                         <button

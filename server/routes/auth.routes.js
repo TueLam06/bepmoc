@@ -42,8 +42,15 @@ function publicUser(row) {
     };
 }
 
+// Email lưu và tra cứu dạng chữ thường, bỏ khoảng trắng: gõ "Lan@Gmail.com" vẫn ra đúng tài khoản
+// (không thì đăng nhập sẽ báo nhầm "chưa đăng ký")
+const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+
+const EMAIL_NOT_FOUND = { error: 'Email này chưa được đăng ký', code: 'EMAIL_NOT_FOUND' };
+
 router.post('/register', registerLimiter, async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     if (!name || !email || !password) {
         return res.status(400).json({ error: 'Thiếu name, email hoặc password' });
@@ -100,23 +107,30 @@ router.post('/register', registerLimiter, async (req, res) => {
 });
 
 router.post('/login', loginIpLimiter, loginLimiter, async (req, res) => {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     if (!email || !password) {
-        return res.status(400).json({ error: 'Thiếu email hoặc password' });
+        return res.status(400).json({ error: 'Vui lòng nhập email và mật khẩu' });
     }
 
     try {
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
 
+        // Báo rõ email chưa đăng ký để khách biết mà tạo tài khoản; dò email đã bị loginIpLimiter chặn
         if (!user) {
-            return res.status(401).json({ error: 'Email hoặc password không đúng' });
+            return res.status(404).json(EMAIL_NOT_FOUND);
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
-            return res.status(401).json({ error: 'Email hoặc password không đúng' });
+            // Lượt sai còn lại trước khi bị chặn 15 phút (đã trừ lần này), client cảnh báo khi còn ít
+            return res.status(401).json({
+                error: 'Mật khẩu không đúng',
+                code: 'WRONG_PASSWORD',
+                attemptsLeft: req.loginRateLimit?.remaining ?? null,
+            });
         }
 
         if (!user.email_verified) {
@@ -178,7 +192,7 @@ router.post('/verify-email', async (req, res) => {
 // POST /api/auth/resend-verification - body: { email }
 // Luôn trả cùng một câu để không lộ email nào đã đăng ký
 router.post('/resend-verification', resendVerificationLimiter, async (req, res) => {
-    const email = String(req.body.email || '').trim();
+    const email = normalizeEmail(req.body.email);
     const message = 'Nếu email đã đăng ký và chưa xác thực, chúng tôi đã gửi lại link xác thực';
 
     if (!email) {
@@ -202,24 +216,24 @@ router.post('/resend-verification', resendVerificationLimiter, async (req, res) 
 });
 
 // POST /api/auth/forgot-password - body: { email }
-// Luôn trả cùng một câu để không lộ email nào đã đăng ký
+// Email chưa đăng ký thì báo rõ để khách không ngồi chờ mail không bao giờ tới
 router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
-    const email = String(req.body.email || '').trim();
-    const message = 'Nếu email đã đăng ký, chúng tôi đã gửi link đặt lại mật khẩu. Vui lòng kiểm tra hộp thư';
+    const email = normalizeEmail(req.body.email);
 
     if (!email) {
-        return res.status(400).json({ error: 'Thiếu email' });
+        return res.status(400).json({ error: 'Vui lòng nhập email' });
     }
 
     try {
         const result = await pool.query('SELECT id, name, email, password FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
-        // Không chờ gửi mail: thời gian phản hồi và lỗi gửi mail không được để lộ email có tồn tại hay không
-        if (user) {
-            sendPasswordResetEmail(user, generateResetToken(user))
-                .catch((mailErr) => console.error('Send reset email error:', mailErr));
+        if (!user) {
+            return res.status(404).json(EMAIL_NOT_FOUND);
         }
-        res.json({ message });
+        // Không chờ gửi mail để phản hồi nhanh, lỗi gửi chỉ ghi log
+        sendPasswordResetEmail(user, generateResetToken(user))
+            .catch((mailErr) => console.error('Send reset email error:', mailErr));
+        res.json({ message: 'Đã gửi link đặt lại mật khẩu, vui lòng kiểm tra hộp thư (cả mục Spam)' });
     } catch (err) {
         console.error('Forgot password error:', err);
         res.status(500).json({ error: 'Không gửi được email, vui lòng thử lại sau' });

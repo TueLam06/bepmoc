@@ -73,16 +73,40 @@ describe('đăng ký và xác thực email', () => {
     });
 });
 
+describe('đăng nhập', () => {
+    test('email chưa đăng ký và sai mật khẩu báo lỗi khác nhau', async () => {
+        await createUser({ email: 'giang@test.local' });
+
+        const missing = await login('khongco@test.local');
+        expect(missing.status).toBe(404);
+        expect(missing.body.code).toBe('EMAIL_NOT_FOUND');
+
+        const wrong = await login('giang@test.local', 'saimatkhau');
+        expect(wrong.status).toBe(401);
+        expect(wrong.body.code).toBe('WRONG_PASSWORD');
+    });
+
+    test('email gõ hoa/thường hay thừa khoảng trắng vẫn ra đúng tài khoản', async () => {
+        const reg = await request(app)
+            .post('/api/auth/register')
+            .send({ name: 'Hà', email: ' Ha@Test.Local ', password: PASSWORD });
+        expect(reg.body.email).toBe('ha@test.local');
+        await request(app).post('/api/auth/verify-email').send({ token: lastToken(sendVerificationEmail) });
+
+        expect((await login('HA@test.local')).status).toBe(200);
+    });
+});
+
 describe('quên mật khẩu', () => {
-    test('email có hay không tồn tại đều trả cùng một câu', async () => {
+    test('email chưa đăng ký thì báo rõ và không gửi mail', async () => {
         await createUser({ email: 'dung@test.local' });
 
         const exists = await request(app).post('/api/auth/forgot-password').send({ email: 'dung@test.local' });
         const missing = await request(app).post('/api/auth/forgot-password').send({ email: 'khongco@test.local' });
 
         expect(exists.status).toBe(200);
-        expect(missing.status).toBe(200);
-        expect(missing.body).toEqual(exists.body);
+        expect(missing.status).toBe(404);
+        expect(missing.body.code).toBe('EMAIL_NOT_FOUND');
         expect(sendPasswordResetEmail).toHaveBeenCalledTimes(1);
     });
 

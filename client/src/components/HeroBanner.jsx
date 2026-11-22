@@ -54,9 +54,6 @@ function HeroBanner() {
                     >
                         Đồ gỗ tự nhiên cho căn bếp và bàn ăn.
                     </h1>
-                    <p className="mt-4 max-w-md text-[#E6EBE2]">
-                        Đũa, muôi, thớt, lược gỗ và sừng làm thủ công, kho tại Hà Nội.
-                    </p>
                     <Link
                         to="/products"
                         className="mt-8 inline-flex w-fit items-center gap-2 rounded-md bg-[#F5F3EE] px-5 py-2.5 font-medium text-[#1E3A22] hover:bg-white transition-colors"

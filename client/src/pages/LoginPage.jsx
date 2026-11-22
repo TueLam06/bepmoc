@@ -65,14 +65,11 @@ export default function LoginPage() {
                 <div className="max-w-xs mx-auto">
                     <p className="text-xs uppercase tracking-widest text-[#B7C9AF] mb-3">Bếp Mộc Linh Đan</p>
                     <h1
-                        className="text-2xl md:text-3xl lg:text-4xl leading-tight mb-3"
+                        className="text-2xl md:text-3xl lg:text-4xl leading-tight"
                         style={{ fontFamily: "'Fraunces', serif" }}
                     >
                         Mua sắm dễ dàng, giao hàng an tâm.
                     </h1>
-                    <p className="text-[#D8E2D2] text-sm leading-relaxed hidden md:block">
-                        Đăng nhập để theo dõi đơn hàng, lưu địa chỉ và nhận ưu đãi dành riêng cho bạn.
-                    </p>
                 </div>
             </aside>
 

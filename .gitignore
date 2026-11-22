@@ -12,3 +12,8 @@ ROADMAP.md
 
 # Dữ liệu thật của shop (Excel, ảnh, dữ liệu lấy từ Shopee) và script đi kèm, không commit
 server/private/
+
+# Env chứa secret
+*.env
+.env.local
+.env.*.local

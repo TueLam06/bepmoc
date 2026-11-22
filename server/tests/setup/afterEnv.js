@@ -8,6 +8,7 @@ jest.mock('../../utils/mailer', () => ({
     sendOrderConfirmationEmail: jest.fn().mockResolvedValue(),
     sendShippingFeeEmail: jest.fn().mockResolvedValue(),
     sendOrderShippedEmail: jest.fn().mockResolvedValue(),
+    sendNewOrderAdminEmail: jest.fn().mockResolvedValue(),
 }));
 
 beforeEach(() => {

@@ -39,14 +39,11 @@ export default function RegisterPage() {
                 <div className="max-w-sm mx-auto md:mx-0 md:ml-auto md:mr-16">
                     <p className="text-sm tracking-wide text-[#B7C9AF] mb-3">Bếp Mộc Linh Đan</p>
                     <h1
-                        className="text-3xl md:text-5xl leading-tight mb-4"
+                        className="text-3xl md:text-5xl leading-tight"
                         style={{ fontFamily: "'Fraunces', serif" }}
                     >
                         Tham gia cùng hàng ngàn khách hàng khác.
                     </h1>
-                    <p className="text-[#D8E2D2] text-sm md:text-base hidden md:block">
-                        Tạo tài khoản chỉ mất chưa đầy một phút.
-                    </p>
                 </div>
             </div>
 

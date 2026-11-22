@@ -140,4 +140,21 @@ async function buildOrderDocument(order, items) {
     return workbook.xlsx.writeBuffer();
 }
 
-module.exports = { buildOrderDocument };
+// Mã số lấy theo SKU hiện tại; dòng có phiên bản thì chỉ lấy SKU phiên bản (phiên bản đã xoá thì để trống)
+async function getOrderDocumentData(db, orderId) {
+    const orderResult = await db.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    if (orderResult.rows.length === 0) return null;
+    const itemsResult = await db.query(
+        `SELECT oi.product_name, oi.variant_name, oi.quantity, oi.price_at_purchase,
+                CASE WHEN oi.variant_name IS NOT NULL THEN v.sku ELSE p.sku END AS sku
+         FROM order_items oi
+         LEFT JOIN products p ON oi.product_id = p.id
+         LEFT JOIN product_variants v ON v.id = oi.variant_id
+         WHERE oi.order_id = $1
+         ORDER BY oi.id`,
+        [orderId]
+    );
+    return { order: orderResult.rows[0], items: itemsResult.rows };
+}
+
+module.exports = { buildOrderDocument, getOrderDocumentData };

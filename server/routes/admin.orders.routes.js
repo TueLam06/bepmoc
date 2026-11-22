@@ -4,7 +4,7 @@ const pool = require("../config/db");
 const { verifyToken, requireAdmin } = require("../middleware/auth.middleware");
 const { restoreStock } = require("../utils/orderStock");
 const { sendOrderShippedEmail, sendShippingFeeEmail } = require("../utils/mailer");
-const { buildOrderDocument } = require("../utils/orderDocument");
+const { buildOrderDocument, getOrderDocumentData } = require("../utils/orderDocument");
 const { orderDocCode } = require("../utils/orderCode");
 
 router.use(verifyToken, requireAdmin);
@@ -104,25 +104,13 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/export", async (req, res) => {
     const { id } = req.params;
     try {
-        const orderResult = await pool.query("SELECT * FROM orders WHERE id = $1", [id]);
-        if (orderResult.rows.length === 0) {
+        const data = await getOrderDocumentData(pool, id);
+        if (!data) {
             return res.status(404).json({ error: "Không tìm thấy đơn hàng" });
         }
-        const order = orderResult.rows[0];
+        const { order, items } = data;
 
-        // Mã số lấy theo SKU hiện tại; dòng có phiên bản thì chỉ lấy SKU phiên bản (phiên bản đã xoá thì để trống)
-        const itemsResult = await pool.query(
-            `SELECT oi.product_name, oi.variant_name, oi.quantity, oi.price_at_purchase,
-                    CASE WHEN oi.variant_name IS NOT NULL THEN v.sku ELSE p.sku END AS sku
-             FROM order_items oi
-             LEFT JOIN products p ON oi.product_id = p.id
-             LEFT JOIN product_variants v ON v.id = oi.variant_id
-             WHERE oi.order_id = $1
-             ORDER BY oi.id`,
-            [id]
-        );
-
-        const buffer = await buildOrderDocument(order, itemsResult.rows);
+        const buffer = await buildOrderDocument(order, items);
         res.set({
             "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "Content-Disposition": `attachment; filename="${orderDocCode(order)}.xlsx"`,

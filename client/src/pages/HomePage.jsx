@@ -57,7 +57,6 @@ function HomePage() {
             <ProductSection
                 eyebrow="Nổi bật"
                 title="Được chọn nhiều"
-                subtitle="Những món khách quen của shop hay đặt lại."
                 products={featuredProducts}
                 className="py-12"
             />
@@ -67,7 +66,6 @@ function HomePage() {
             <ProductSection
                 eyebrow="Mới về"
                 title="Sản phẩm mới"
-                subtitle="Mẫu mới nhất vừa lên kệ."
                 products={newestProducts}
                 className="pt-12 pb-20"
             />
@@ -76,7 +74,7 @@ function HomePage() {
     );
 }
 
-function ProductSection({ eyebrow, title, subtitle, products, linkTo = "/products", className = "" }) {
+function ProductSection({ eyebrow, title, products, linkTo = "/products", className = "" }) {
     if (products.length === 0) return null;
 
     return (
@@ -90,7 +88,6 @@ function ProductSection({ eyebrow, title, subtitle, products, linkTo = "/product
                     >
                         {title}
                     </h2>
-                    <p className="mt-2 text-[#6B6B65]">{subtitle}</p>
                 </div>
 
                 <Link

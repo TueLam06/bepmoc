@@ -1,8 +1,10 @@
 // Gửi email qua Brevo HTTP API (https://developers.brevo.com/reference/sendtransacemail)
 // Chưa set BREVO_API_KEY (vd: chạy local) thì chỉ in nội dung ra console để test
-async function sendMail({ to, subject, html }) {
+// to: 1 email hoặc mảng email, attachments: [{ name, content: Buffer }]
+async function sendMail({ to, subject, html, attachments }) {
+    const recipients = [].concat(to);
     if (!process.env.BREVO_API_KEY) {
-        console.log(`[mail] Chưa có BREVO_API_KEY, bỏ qua gửi mail tới ${to}: ${subject}\n${html}`);
+        console.log(`[mail] Chưa có BREVO_API_KEY, bỏ qua gửi mail tới ${recipients.join(', ')}: ${subject}\n${html}`);
         return;
     }
 
@@ -18,9 +20,12 @@ async function sendMail({ to, subject, html }) {
                 email: process.env.MAIL_FROM_EMAIL,
                 name: process.env.MAIL_FROM_NAME || 'Bếp Mộc Linh Đan',
             },
-            to: [{ email: to }],
+            to: recipients.map((email) => ({ email })),
             subject,
             htmlContent: html,
+            ...(attachments?.length && {
+                attachment: attachments.map((a) => ({ name: a.name, content: Buffer.from(a.content).toString('base64') })),
+            }),
         }),
     });
 
@@ -132,6 +137,44 @@ async function sendOrderConfirmationEmail(order, items) {
     });
 }
 
+// Báo admin có đơn mới, đính kèm phiếu Excel. items: như buildOrderDocument
+async function sendNewOrderAdminEmail(adminEmails, order, items, attachment) {
+    const rows = items.map((i) => `
+        <tr>
+            <td style="padding: 6px 0; border-top: 1px solid #E5E3DC">
+                ${escapeHtml(i.product_name)}${i.variant_name ? ` - ${escapeHtml(i.variant_name)}` : ''}
+            </td>
+            <td style="padding: 6px 0; border-top: 1px solid #E5E3DC; text-align: center">x${i.quantity}</td>
+            <td style="padding: 6px 0; border-top: 1px solid #E5E3DC; text-align: right; white-space: nowrap">${formatVND(i.price_at_purchase * i.quantity)}</td>
+        </tr>
+    `).join('');
+    const info = (label, value) =>
+        `<p style="font-size: 14px; margin: 4px 0"><span style="color: #6B6B65">${label}:</span> ${escapeHtml(value)}</p>`;
+
+    await sendMail({
+        to: adminEmails,
+        subject: `Đơn hàng mới #${order.id} - ${order.customer_name}`,
+        html: layout(`
+            <h2 style="color: #2F5233">Đơn hàng mới #${order.id}</h2>
+            ${info('Người nhận', order.customer_name)}
+            ${info('Số điện thoại', order.phone)}
+            ${order.email ? info('Email', order.email) : ''}
+            ${info('Địa chỉ', order.address)}
+            ${info('Loại khách', order.user_id ? 'Có tài khoản' : 'Khách vãng lai')}
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0">
+                ${rows}
+                <tr>
+                    <td colspan="2" style="padding: 10px 0; border-top: 2px solid #2F5233"><strong>Tiền hàng</strong></td>
+                    <td style="padding: 10px 0; border-top: 2px solid #2F5233; text-align: right"><strong>${formatVND(order.total)}</strong></td>
+                </tr>
+            </table>
+            <p style="font-size: 14px">Phiếu đơn hàng trong file Excel đính kèm.</p>
+            ${buttonBlock(clientUrl(`/admin/orders/${order.id}`), 'Xem đơn trong trang quản trị')}
+        `),
+        attachments: attachment ? [attachment] : undefined,
+    });
+}
+
 // Trang tra cứu của ViettelPost có captcha nên không gắn sẵn mã vào link được, khách tự dán mã
 const VIETTELPOST_TRACKING_URL = 'https://viettelpost.com.vn/tra-cuu-hanh-trinh-don/';
 
@@ -196,4 +239,5 @@ module.exports = {
     sendOrderConfirmationEmail,
     sendShippingFeeEmail,
     sendOrderShippedEmail,
+    sendNewOrderAdminEmail,
 };

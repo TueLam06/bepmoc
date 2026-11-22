@@ -62,12 +62,11 @@ export default function AdminHome() {
     return (
         <div>
             <h2
-                className="text-2xl text-[#1A1A18] mb-1"
+                className="text-2xl text-[#1A1A18] mb-8"
                 style={{ fontFamily: "'Fraunces', serif" }}
             >
                 Tổng quan
             </h2>
-            <p className="text-[#6B6B65] mb-8">Chọn một mục để bắt đầu quản lý.</p>
 
             {/* Thống kê nhanh */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">

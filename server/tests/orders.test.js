@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../app');
-const { sendOrderConfirmationEmail } = require('../utils/mailer');
+const { sendOrderConfirmationEmail, sendNewOrderAdminEmail } = require('../utils/mailer');
 const {
     pool,
     resetDb,
@@ -146,5 +146,41 @@ describe('nhiều người mua cùng lúc', () => {
         expect(statuses).toEqual([201, 201, 201, 400, 400, 400]);
         expect(await getStock(product.id)).toBe(0);
         expect(await countOrders()).toBe(3);
+    });
+});
+
+// Mail admin gửi sau khi trả response nên phải chờ
+const waitForCall = async (mock) => {
+    for (let i = 0; i < 50 && mock.mock.calls.length === 0; i++) {
+        await new Promise((r) => setTimeout(r, 20));
+    }
+};
+
+describe('báo đơn mới cho admin', () => {
+    test('gửi 1 mail tới tất cả admin, kèm phiếu Excel', async () => {
+        const { user: a1 } = await createUser({ role: 'admin' });
+        const { user: a2 } = await createUser({ role: 'admin' });
+        await createUser();
+        const product = await createProduct({ price: 510000 });
+
+        const res = await guestOrder([{ id: product.id, quantity: 5 }]);
+        expect(res.status).toBe(201);
+        await waitForCall(sendNewOrderAdminEmail);
+
+        expect(sendNewOrderAdminEmail).toHaveBeenCalledTimes(1);
+        const [emails, order, items, attachment] = sendNewOrderAdminEmail.mock.calls[0];
+        expect(emails.sort()).toEqual([a1.email, a2.email].sort());
+        expect(order.id).toBe(res.body.orderId);
+        expect(items).toHaveLength(1);
+        expect(attachment.name).toMatch(/^DH\d{4}\d{6}\.xlsx$/);
+        expect(attachment.content.byteLength).toBeGreaterThan(0);
+    });
+
+    test('không có admin thì không gửi', async () => {
+        const product = await createProduct();
+        const res = await guestOrder([{ id: product.id, quantity: 1 }]);
+        expect(res.status).toBe(201);
+        await new Promise((r) => setTimeout(r, 300));
+        expect(sendNewOrderAdminEmail).not.toHaveBeenCalled();
     });
 });

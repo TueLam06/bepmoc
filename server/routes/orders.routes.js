@@ -4,7 +4,22 @@ const pool = require("../config/db");
 const { verifyToken, optionalAuth } = require("../middleware/auth.middleware");
 const { restoreStock } = require("../utils/orderStock");
 const { trackLimiter, orderLimiter } = require("../middleware/rateLimit.middleware");
-const { sendOrderConfirmationEmail } = require("../utils/mailer");
+const { sendOrderConfirmationEmail, sendNewOrderAdminEmail } = require("../utils/mailer");
+const { buildOrderDocument, getOrderDocumentData } = require("../utils/orderDocument");
+const { orderDocCode } = require("../utils/orderCode");
+
+async function notifyAdminsNewOrder(orderId) {
+    const admins = await pool.query("SELECT email FROM users WHERE role = 'admin'");
+    if (admins.rows.length === 0) return;
+    const { order, items } = await getOrderDocumentData(pool, orderId);
+    const content = await buildOrderDocument(order, items);
+    await sendNewOrderAdminEmail(
+        admins.rows.map((r) => r.email),
+        order,
+        items,
+        { name: `${orderDocCode(order)}.xlsx`, content }
+    );
+}
 
 // Chuẩn hoá SĐT để so sánh: bỏ ký tự không phải số, +84/84 -> 0
 function normalizePhone(phone) {
@@ -162,6 +177,7 @@ router.post("/", optionalAuth, orderLimiter, async (req, res) => {
             { id: orderId, customer_name, phone, address, total, email, user_id: req.user ? req.user.id : null },
             orderItemsData
         ).catch((mailErr) => console.error("Send order confirmation email error:", mailErr));
+        notifyAdminsNewOrder(orderId).catch((mailErr) => console.error("Send new order admin email error:", mailErr));
 
         return res.status(201).json({ message: "Đặt hàng thành công", orderId, total });
     } catch (err) {

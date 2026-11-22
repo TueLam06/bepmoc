@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import BrandLogo from "./BrandLogo";
@@ -27,7 +27,12 @@ function Header() {
         ...(user ? [{ to: "/orders", label: "Đơn hàng của tôi" }] : [{ to: "/track-order", label: "Tra cứu đơn" }]),
     ];
 
-    const linkClass = "text-[#1A1A18] hover:text-[#2F5233] transition-colors font-medium";
+    const navClass = ({ isActive }) =>
+        `border-b-2 py-1 font-medium transition-colors ${
+            isActive ? "border-[#2F5233] text-[#2F5233]" : "border-transparent text-[#1A1A18] hover:text-[#2F5233]"
+        }`;
+    const mobileNavClass = ({ isActive }) =>
+        `py-3 border-b border-[#ECEAE3] font-medium ${isActive ? "text-[#2F5233] font-semibold underline decoration-2 underline-offset-[6px]" : "text-[#1A1A18] hover:text-[#2F5233]"}`;
     const buttonClass =
         "rounded-md bg-[#2F5233] text-[#F5F3EE] px-4 py-2 text-sm font-medium hover:bg-[#244027] transition-colors";
     const adminClass =
@@ -44,13 +49,13 @@ function Header() {
                 {/* Menu ngang cho màn hình rộng */}
                 <div className="hidden lg:flex items-center gap-6">
                     {links.map((l) => (
-                        <Link key={l.to} to={l.to} className={linkClass}>
+                        <NavLink key={l.to} to={l.to} end={l.to === "/"} className={navClass}>
                             {l.label}
-                        </Link>
+                        </NavLink>
                     ))}
-                    <Link to="/cart" className={linkClass}>
+                    <NavLink to="/cart" className={navClass}>
                         Giỏ hàng {cartCount > 0 ? `(${cartCount})` : ""}
-                    </Link>
+                    </NavLink>
                     {user ? (
                         <>
                             {user.role === "admin" && (
@@ -74,10 +79,10 @@ function Header() {
 
                 {/* Điện thoại / tablet: giỏ hàng + nút mở menu */}
                 <div className="flex lg:hidden items-center gap-1">
-                    <Link
+                    <NavLink
                         to="/cart"
                         onClick={close}
-                        className="relative p-2 text-[#1A1A18] hover:text-[#2F5233]"
+                        className={({ isActive }) => `relative p-2 hover:text-[#2F5233] ${isActive ? "text-[#2F5233]" : "text-[#1A1A18]"}`}
                         aria-label={`Giỏ hàng${cartCount > 0 ? `, ${cartCount} sản phẩm` : ""}`}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
@@ -89,7 +94,7 @@ function Header() {
                                 {cartCount > 99 ? "99+" : cartCount}
                             </span>
                         )}
-                    </Link>
+                    </NavLink>
                     <button
                         type="button"
                         onClick={() => setOpen((v) => !v)}
@@ -113,7 +118,7 @@ function Header() {
             {open && (
                 <div
                     id="mobile-menu"
-                    className="lg:hidden absolute inset-x-0 top-full z-50 border-b border-[#D9D6CC] bg-[#FAFAF8] shadow-sm"
+                    className="lg:hidden border-t border-[#ECEAE3] bg-[#FAFAF8]"
                 >
                     <div className="flex flex-col px-4 sm:px-6 py-2" onClick={(e) => e.target.closest("a") && close()}>
                         {user && (
@@ -122,9 +127,9 @@ function Header() {
                             </Link>
                         )}
                         {links.map((l) => (
-                            <Link key={l.to} to={l.to} className={`py-3 border-b border-[#ECEAE3] ${linkClass}`}>
+                            <NavLink key={l.to} to={l.to} end={l.to === "/"} className={mobileNavClass}>
                                 {l.label}
-                            </Link>
+                            </NavLink>
                         ))}
                         <div className="flex flex-wrap gap-3 py-4">
                             {user ? (

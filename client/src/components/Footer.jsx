@@ -25,12 +25,12 @@ function Footer({ title }) {
         },
         {
             heading: "Hỗ trợ",
-            links: [{ to: "/chat", label: "Chatbot tư vấn" }],
+            links: [
+                { to: "/chat", label: "Chatbot tư vấn" },
+                { href: "tel:0915635588", label: "Hotline: 0915 635 588" },
+            ],
         },
     ];
-
-    // Chưa có trang riêng cho các mục này
-    const legalLinks = ["Privacy Policy", "Terms of Service", "Contact"];
 
     const linkClass = "text-[#6B6B65] hover:text-[#2F5233] transition-colors";
 
@@ -42,7 +42,7 @@ function Footer({ title }) {
                     <div className="col-span-2 md:col-span-1">
                         <BrandLogo />
                         <p className="text-sm text-[#6B6B65] mt-3 max-w-xs">
-                            Đồ gỗ gia dụng làm thủ công, giao toàn quốc từ Hà Nội.
+                            Đội 7, Thụy Ứng, Thường Tín, Hà Nội
                         </p>
                     </div>
 
@@ -53,10 +53,16 @@ function Footer({ title }) {
                             </h3>
                             <ul className="space-y-2 text-sm">
                                 {section.links.map((link) => (
-                                    <li key={link.to}>
-                                        <Link to={link.to} className={linkClass}>
-                                            {link.label}
-                                        </Link>
+                                    <li key={link.to || link.href}>
+                                        {link.href ? (
+                                            <a href={link.href} className={linkClass}>
+                                                {link.label}
+                                            </a>
+                                        ) : (
+                                            <Link to={link.to} className={linkClass}>
+                                                {link.label}
+                                            </Link>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
@@ -65,17 +71,10 @@ function Footer({ title }) {
                 </div>
 
                 {/* Phần dưới cùng */}
-                <div className="border-t border-[#D9D6CC] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <div className="border-t border-[#D9D6CC] pt-6 text-sm">
                     <p className="text-[#6B6B65]">
                         © {new Date().getFullYear()} {title}
                     </p>
-                    <div className="flex items-center gap-6">
-                        {legalLinks.map((label) => (
-                            <a key={label} href="#" className={linkClass}>
-                                {label}
-                            </a>
-                        ))}
-                    </div>
                 </div>
             </div>
         </footer>

@@ -89,22 +89,13 @@ function ChatPage() {
         <main className="min-h-screen bg-[#FAFAF8]">
             {/* Header */}
             <section className="bg-[#2F5233]">
-                <div className="max-w-4xl mx-auto px-6 py-12 md:py-16">
-                    <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-[#D8E2D2]">
-                        Trợ lý Bếp Mộc
-                    </p>
-
+                <div className="max-w-4xl mx-auto px-6 py-5 md:py-6">
                     <h1
-                        className="text-4xl md:text-5xl text-[#F5F3EE]"
+                        className="text-2xl md:text-3xl text-[#F5F3EE]"
                         style={{ fontFamily: "'Fraunces', serif" }}
                     >
                         Chat với trợ lý AI
                     </h1>
-
-                    <p className="mt-4 max-w-xl text-[#D8E2D2] leading-relaxed">
-                        Hỏi tôi về sản phẩm, tìm kiếm sản phẩm hoặc nhận gợi ý
-                        phù hợp với nhu cầu của bạn.
-                    </p>
                 </div>
             </section>
 
